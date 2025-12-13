@@ -4,7 +4,7 @@ import { getUserRole } from "@/lib/firebase/users";
 import { getLotById } from "./queries";
 import { Lot, LotStatus, Sortie, HistoryEntry, HistoryType } from "./types";
 
-export async function createLot(lotData: Omit<Lot, "id" | "statut" | "createdAt" | "updatedAt" | "history">, userId: string): Promise<string> {
+export async function createLot(lotData: Omit<Lot, "id" | "statut" | "createdAt" | "updatedAt" | "history" | "createdBy">, userId: string): Promise<string> {
   try {
     const role = await getUserRole(userId);
     if (role !== "imrep") {
@@ -21,15 +21,25 @@ export async function createLot(lotData: Omit<Lot, "id" | "statut" | "createdAt"
     }
 
     const lotRef = doc(collection(db, "lots"));
+    
+    // Filtrer les valeurs undefined pour Firestore
+    const cleanLotData: Record<string, any> = {};
+    Object.keys(lotData).forEach((key) => {
+      const value = lotData[key as keyof typeof lotData];
+      if (value !== undefined) {
+        cleanLotData[key] = value;
+      }
+    });
+
     const historyEntry: HistoryEntry = {
       type: "creation",
       timestamp: new Date(),
       userId,
-      data: { ...lotData },
+      data: cleanLotData,
     };
 
-    await setDoc(lotRef, {
-      ...lotData,
+    const firestoreData: Record<string, any> = {
+      ...cleanLotData,
       statut: "en_attente" as LotStatus,
       createdBy: userId,
       history: [historyEntry],
@@ -37,7 +47,9 @@ export async function createLot(lotData: Omit<Lot, "id" | "statut" | "createdAt"
       updatedAt: Timestamp.now(),
       dateDebutGestion: Timestamp.fromDate(lotData.dateDebutGestion),
       dateEffetDemandee: Timestamp.fromDate(lotData.dateEffetDemandee),
-    });
+    };
+
+    await setDoc(lotRef, firestoreData);
 
     return lotRef.id;
   } catch (error) {
@@ -86,8 +98,17 @@ export async function updateLot(lotId: string, updates: Partial<Lot>, userId: st
       data: changedFields,
     };
 
+    // Filtrer les valeurs undefined pour Firestore
+    const cleanChangedFields: Record<string, any> = {};
+    Object.keys(changedFields).forEach((key) => {
+      const value = changedFields[key];
+      if (value !== undefined) {
+        cleanChangedFields[key] = value;
+      }
+    });
+
     const updateData: any = {
-      ...changedFields,
+      ...cleanChangedFields,
       updatedAt: Timestamp.now(),
       history: arrayUnion(historyEntry),
     };
@@ -307,6 +328,42 @@ export async function refuserSortie(lotId: string, motifRefus: string, validated
     });
   } catch (error) {
     console.error("Erreur lors du refus de la sortie:", error);
+    throw error;
+  }
+}
+
+export async function deleteLot(lotId: string, userId: string): Promise<void> {
+  try {
+    const role = await getUserRole(userId);
+    if (role !== "imrep") {
+      throw new Error("Seuls les utilisateurs IMREP peuvent supprimer des lots");
+    }
+
+    const lot = await getLotById(lotId);
+    if (!lot) {
+      throw new Error("Lot non trouvé");
+    }
+
+    if (lot.statut !== "en_attente") {
+      throw new Error("Seuls les lots en attente peuvent être supprimés");
+    }
+
+    if (lot.createdBy !== userId) {
+      throw new Error("Vous ne pouvez supprimer que vos propres lots");
+    }
+
+    // Suppression du document
+    await updateDoc(doc(db, "lots", lotId), {
+      statut: "refuse" as LotStatus, // On marque comme refusé plutôt que de supprimer pour garder l'historique
+      motifRefus: "Supprimé par l'IMREP",
+      updatedAt: Timestamp.now(),
+    });
+
+    // Note: On ne supprime pas vraiment le document pour garder l'historique
+    // Si vous voulez une vraie suppression, utilisez deleteDoc au lieu de updateDoc
+    // await deleteDoc(doc(db, "lots", lotId));
+  } catch (error) {
+    console.error("Erreur lors de la suppression du lot:", error);
     throw error;
   }
 }

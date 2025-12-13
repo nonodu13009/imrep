@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Edit, Eye, LogOut as SortieIcon, Check, X } from "lucide-react";
+import { Edit, Eye, LogOut as SortieIcon, Check, X, Trash2 } from "lucide-react";
 import { Table, TableRow, TableCell, Badge, Button } from "@/components/ui";
 import { Lot, LotStatus } from "@/lib/lots/types";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import ValidationModal from "./ValidationModal";
 import RefusModal from "./RefusModal";
+import SortieModal from "./SortieModal";
 
 interface LotsTableProps {
   lots: Lot[];
@@ -16,7 +17,8 @@ interface LotsTableProps {
   onRefuseEntree?: (lotId: string, motif: string) => void;
   onValidateSortie?: (lotId: string) => void;
   onRefuseSortie?: (lotId: string, motif: string) => void;
-  onRequestSortie?: (lotId: string) => void;
+  onRequestSortie?: (lotId: string, sortieData: { motif: string; dateSortieDemandee: Date; dateSortieDeclaration: Date; noteSortie?: string }) => void;
+  onDeleteLot?: (lotId: string) => void;
 }
 
 export default function LotsTable({
@@ -27,10 +29,12 @@ export default function LotsTable({
   onValidateSortie,
   onRefuseSortie,
   onRequestSortie,
+  onDeleteLot,
 }: LotsTableProps) {
   const [validationModal, setValidationModal] = useState<{ isOpen: boolean; lotId: string; type: "entree" | "sortie" } | null>(null);
   const [refusModal, setRefusModal] = useState<{ isOpen: boolean; lotId: string; type: "entree" | "sortie" } | null>(null);
   const [sortieModal, setSortieModal] = useState<{ isOpen: boolean; lotId: string } | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; lotId: string } | null>(null);
 
   const getStatusBadge = (statut: LotStatus) => {
     const badges = {
@@ -61,7 +65,7 @@ export default function LotsTable({
             <TableCell className="font-medium">{lot.codeLot}</TableCell>
             <TableCell>{lot.adresse}</TableCell>
             {role === "allianz" && (
-              <TableCell className="text-sm text-[#64748b]">
+              <TableCell className="text-sm text-[var(--color-neutral-600)]">
                 {lot.createdBy}
               </TableCell>
             )}
@@ -78,11 +82,22 @@ export default function LotsTable({
                 {role === "imrep" && (
                   <>
                     {lot.statut === "en_attente" && (
-                      <Link href={`/lots/${lot.id}/edit`}>
-                        <Button variant="secondary" className="p-2">
-                          <Edit size={16} />
-                        </Button>
-                      </Link>
+                      <>
+                        <Link href={`/lots/${lot.id}/edit`}>
+                          <Button variant="secondary" className="p-2">
+                            <Edit size={16} />
+                          </Button>
+                        </Link>
+                        {onDeleteLot && (
+                          <Button
+                            variant="danger"
+                            className="p-2"
+                            onClick={() => setDeleteModal({ isOpen: true, lotId: lot.id! })}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        )}
+                      </>
                     )}
                     {lot.statut === "valide" && !lot.sortie && (
                       <Button
@@ -176,18 +191,32 @@ export default function LotsTable({
       )}
 
       {sortieModal && (
-        <ConfirmModal
+        <SortieModal
           isOpen={sortieModal.isOpen}
           onClose={() => setSortieModal(null)}
-          onConfirm={() => {
+          onConfirm={(sortieData) => {
             if (onRequestSortie) {
-              onRequestSortie(sortieModal.lotId);
+              onRequestSortie(sortieModal.lotId, sortieData);
             }
             setSortieModal(null);
           }}
-          title="Demander une sortie"
-          message="Êtes-vous sûr de vouloir demander la sortie de ce lot ?"
-          variant="primary"
+        />
+      )}
+
+      {deleteModal && (
+        <ConfirmModal
+          isOpen={deleteModal.isOpen}
+          onClose={() => setDeleteModal(null)}
+          onConfirm={() => {
+            if (onDeleteLot) {
+              onDeleteLot(deleteModal.lotId);
+            }
+            setDeleteModal(null);
+          }}
+          title="Supprimer le lot"
+          message="Êtes-vous sûr de vouloir supprimer ce lot ? Cette action est irréversible."
+          variant="danger"
+          confirmText="Supprimer"
         />
       )}
     </>

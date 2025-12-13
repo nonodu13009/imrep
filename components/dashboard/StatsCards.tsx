@@ -19,21 +19,21 @@ export default function StatsCards({
   sortiesEnAttente = 0,
 }: StatsCardsProps) {
   const stats = [
-    { label: "Total", value: total, color: "text-[#2563eb]" },
-    { label: "En attente", value: enAttente, color: "text-[#facc15]" },
-    { label: "Validés", value: valides, color: "text-[#22c55e]" },
-    { label: "Refusés", value: refuses, color: "text-[#ef4444]" },
+    { label: "Total", value: total, color: "text-[var(--color-primary)]" },
+    { label: "En attente", value: enAttente, color: "text-[var(--color-warning)]" },
+    { label: "Validés", value: valides, color: "text-[var(--color-success)]" },
+    { label: "Refusés", value: refuses, color: "text-[var(--color-danger)]" },
   ];
 
   if (sortiesEnAttente > 0) {
-    stats.push({ label: "Sorties en attente", value: sortiesEnAttente, color: "text-[#facc15]" });
+    stats.push({ label: "Sorties en attente", value: sortiesEnAttente, color: "text-[var(--color-warning)]" });
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px] mb-[24px]">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[var(--spacing-sm)] mb-[var(--spacing-md)]">
       {stats.map((stat) => (
-        <Card key={stat.label} className="p-5">
-          <p className="text-sm text-[#64748b] mb-2">{stat.label}</p>
+        <Card key={stat.label} className="p-[20px]">
+          <p className="text-sm text-[var(--color-neutral-600)] mb-2">{stat.label}</p>
           <p className={`text-[32px] font-bold ${stat.color}`}>{stat.value}</p>
         </Card>
       ))}

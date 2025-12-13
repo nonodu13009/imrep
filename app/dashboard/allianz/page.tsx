@@ -124,7 +124,7 @@ export default function DashboardAllianzPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-base text-[#475569]">Chargement...</p>
+          <p className="text-base text-[var(--color-neutral-600)]">Chargement...</p>
         </div>
       </DashboardLayout>
     );
@@ -155,7 +155,7 @@ export default function DashboardAllianzPage() {
 
       {filteredLots.length === 0 ? (
         <div className="text-center py-[40px]">
-          <p className="text-base text-[#64748b]">
+          <p className="text-base text-[var(--color-neutral-600)]">
             {lots.length === 0 ? "Aucun lot pour le moment" : "Aucun lot ne correspond aux filtres"}
           </p>
         </div>

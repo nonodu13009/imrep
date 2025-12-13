@@ -9,6 +9,7 @@ import { SectionTitle, Button } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getLotsByImrep } from "@/lib/lots/queries";
+import { deleteLot, requestSortie } from "@/lib/lots/actions";
 import { Lot, LotStatus } from "@/lib/lots/types";
 import StatsCards from "@/components/dashboard/StatsCards";
 import FiltersBar from "@/components/dashboard/FiltersBar";
@@ -63,11 +64,38 @@ export default function DashboardImrepPage() {
     }
   }, [statusFilter, lots]);
 
+  const handleDeleteLot = async (lotId: string) => {
+    if (!user) return;
+    try {
+      await deleteLot(lotId, user.uid);
+      showToast("Lot supprimé avec succès", "success");
+      const updatedLots = await getLotsByImrep(user.uid);
+      setLots(updatedLots);
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors de la suppression", "error");
+    }
+  };
+
+  const handleRequestSortie = async (
+    lotId: string,
+    sortieData: { motif: string; dateSortieDemandee: Date; dateSortieDeclaration: Date; noteSortie?: string }
+  ) => {
+    if (!user) return;
+    try {
+      await requestSortie(lotId, sortieData, user.uid);
+      showToast("Demande de sortie créée avec succès", "success");
+      const updatedLots = await getLotsByImrep(user.uid);
+      setLots(updatedLots);
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors de la demande de sortie", "error");
+    }
+  };
+
   if (authLoading || roleLoading || loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-base text-[#475569]">Chargement...</p>
+          <p className="text-base text-[var(--color-neutral-600)]">Chargement...</p>
         </div>
       </DashboardLayout>
     );
@@ -98,12 +126,12 @@ export default function DashboardImrepPage() {
 
       {filteredLots.length === 0 ? (
         <div className="text-center py-[40px]">
-          <p className="text-base text-[#64748b]">
+          <p className="text-base text-[var(--color-neutral-600)]">
             {lots.length === 0 ? "Aucun lot pour le moment" : "Aucun lot ne correspond aux filtres"}
           </p>
         </div>
       ) : (
-        <LotsTable lots={filteredLots} role="imrep" />
+        <LotsTable lots={filteredLots} role="imrep" onDeleteLot={handleDeleteLot} onRequestSortie={handleRequestSortie} />
       )}
     </DashboardLayout>
   );

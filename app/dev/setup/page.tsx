@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button, Card, SectionTitle } from "@/components/ui";
 import { useToast } from "@/components/ui";
 import { registerUser } from "@/lib/firebase/auth";
@@ -143,6 +144,15 @@ export default function DevSetupPage() {
             <li>• Admin Allianz : jeanmichel@allianz-nogaro.fr / allianz</li>
             <li>• IMREP Test : imrep@test.fr / imrep1234</li>
           </ul>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-[#e5e7eb]">
+          <a
+            href="/dev/mock-lots"
+            className="block w-full text-center px-4 py-2 bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] hover:bg-[var(--color-primary-hover)] transition-colors text-sm font-medium"
+          >
+            Générer 20 lots mockés →
+          </a>
         </div>
       </Card>
     </div>

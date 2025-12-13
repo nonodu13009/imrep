@@ -32,10 +32,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   };
 
   const typeClasses = {
-    success: "bg-[#22c55e] text-white",
-    error: "bg-[#ef4444] text-white",
-    warning: "bg-[#facc15] text-gray-900",
-    info: "bg-[#2563eb] text-white",
+    success: "bg-[var(--color-success)] text-white",
+    error: "bg-[var(--color-danger)] text-white",
+    warning: "bg-[var(--color-warning)] text-[var(--color-dark)]",
+    info: "bg-[var(--color-primary)] text-white",
   };
 
   return (
@@ -45,7 +45,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`${typeClasses[toast.type]} px-4 py-3 rounded-[10px] shadow-lg flex items-center gap-3 min-w-[300px] max-w-[500px] animate-fade-in`}
+            className={`${typeClasses[toast.type]} px-4 py-3 rounded-[var(--radius-md)] shadow-[var(--shadow-hover)] flex items-center gap-3 min-w-[300px] max-w-[500px] animate-fade-in`}
           >
             <p className="flex-1 text-sm font-medium">{toast.message}</p>
             <button

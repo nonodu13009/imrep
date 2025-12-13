@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { LogOut, LayoutDashboard, Users, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -18,6 +18,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user } = useAuth();
   const { role, loading } = useUserRole();
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = async () => {
     try {
@@ -31,13 +32,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-base text-[#475569]">Chargement...</p>
+        <p className="text-base text-[var(--color-neutral-600)]">Chargement...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9]">
+    <div className="min-h-screen bg-[var(--color-light)]">
       <header className="bg-gradient-to-r from-[#2563eb] to-[#3b82f6] text-white shadow-md">
         <div className="max-w-screen-xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -48,13 +49,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   alt="Logo Allianz"
                   width={150}
                   height={40}
-                  className="object-contain"
+                  className="object-contain brightness-0 invert"
                 />
               </Link>
-              <nav className="hidden md:flex items-center gap-4">
+              <nav className="hidden md:flex items-center gap-2">
                 <Link
                   href="/dashboard"
-                  className="flex items-center gap-2 px-3 py-2 rounded-[10px] hover:bg-white/10 transition-colors"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-colors ${
+                    pathname?.startsWith("/dashboard") && !pathname?.startsWith("/dashboard/imrep") && !pathname?.startsWith("/dashboard/allianz")
+                      ? "bg-white text-[var(--color-primary)] font-medium"
+                      : "text-white/90 hover:bg-white/20 hover:text-white"
+                  }`}
                 >
                   <LayoutDashboard size={18} />
                   <span>Dashboard</span>
@@ -62,7 +67,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 {role === "allianz" && (
                   <Link
                     href="/utilisateurs"
-                    className="flex items-center gap-2 px-3 py-2 rounded-[10px] hover:bg-white/10 transition-colors"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-colors ${
+                      pathname === "/utilisateurs"
+                        ? "bg-white text-[var(--color-primary)] font-medium"
+                        : "text-white/90 hover:bg-white/20 hover:text-white"
+                    }`}
                   >
                     <Users size={18} />
                     <span>Utilisateurs</span>
@@ -71,17 +80,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </nav>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm hidden md:block">{user?.email}</span>
-              <Button variant="secondary" onClick={handleLogout} className="text-white border-white/30 hover:bg-white/10">
-                <LogOut size={18} className="mr-2" />
-                Déconnexion
-              </Button>
+              <span className="text-sm hidden md:block text-white/90">{user?.email}</span>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)] bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors text-sm font-medium"
+              >
+                <LogOut size={18} />
+                <span className="hidden sm:inline">Déconnexion</span>
+              </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-screen-xl mx-auto px-6 py-[40px]">
+      <main className="max-w-screen-xl mx-auto px-6 py-[var(--spacing-lg)]">
         {children}
       </main>
     </div>

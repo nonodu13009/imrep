@@ -33,6 +33,8 @@ export interface Lot {
   codeProprietaire: string;
   codeLot: string;
   adresse: string;
+  codePostal: string;
+  ville: string;
   complementAdresse?: string;
   etage: Etage;
   typeLogement: TypeLogement;

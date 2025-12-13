@@ -16,12 +16,12 @@ export default function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const baseClasses = "px-4 py-2 rounded-[10px] font-medium transition active:scale-[0.98]";
+  const baseClasses = "px-4 py-2 rounded-[var(--radius-md)] font-medium transition active:scale-[0.98]";
   
   const variantClasses = {
-    primary: "bg-[#2563eb] text-white hover:bg-[#1d4ed8]",
-    secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300",
-    danger: "bg-[#ef4444] text-white hover:bg-[#dc2626]",
+    primary: "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]",
+    secondary: "bg-[var(--color-neutral-200)] text-[var(--color-neutral-700)] hover:bg-[var(--color-neutral-300)]",
+    danger: "bg-[var(--color-danger)] text-white hover:bg-[#dc2626]",
   };
 
   const isDisabled = disabled || isLoading;

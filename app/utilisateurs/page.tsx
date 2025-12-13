@@ -91,7 +91,7 @@ export default function UtilisateursPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-base text-[#475569]">Chargement...</p>
+          <p className="text-base text-[var(--color-neutral-600)]">Chargement...</p>
         </div>
       </DashboardLayout>
     );
@@ -156,7 +156,7 @@ export default function UtilisateursPage() {
                     </>
                   )}
                   {isProtected && (
-                    <span className="text-sm text-[#64748b]">Protégé</span>
+                    <span className="text-sm text-[var(--color-neutral-500)]">Protégé</span>
                   )}
                 </div>
               </TableCell>
@@ -167,8 +167,8 @@ export default function UtilisateursPage() {
 
       {selectedUser?.action === "role" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-[10px] p-6 max-w-md w-full mx-4 shadow-lg">
-            <h3 className="text-[20px] font-semibold text-[#1e293b] mb-4">
+          <div className="bg-white rounded-[var(--radius-md)] p-[var(--spacing-md)] max-w-md w-full mx-4 shadow-[var(--shadow-hover)]">
+            <h3 className="text-[20px] font-semibold text-[var(--color-dark)] mb-4">
               Modifier le rôle
             </h3>
             <Select

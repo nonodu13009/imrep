@@ -29,7 +29,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-base text-[#475569]">Redirection...</p>
+      <p className="text-base text-[var(--color-neutral-600)]">Redirection...</p>
     </div>
   );
 }
