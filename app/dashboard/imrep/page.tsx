@@ -9,7 +9,7 @@ import { SectionTitle, Button } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getLotsByImrep } from "@/lib/lots/queries";
-import { deleteLot, requestSortie } from "@/lib/lots/actions";
+import { requestSortie, requestSuppression } from "@/lib/lots/actions";
 import { Lot, LotStatus } from "@/lib/lots/types";
 import StatsCards from "@/components/dashboard/StatsCards";
 import FiltersBar from "@/components/dashboard/FiltersBar";
@@ -64,18 +64,6 @@ export default function DashboardImrepPage() {
     }
   }, [statusFilter, lots]);
 
-  const handleDeleteLot = async (lotId: string) => {
-    if (!user) return;
-    try {
-      await deleteLot(lotId, user.uid);
-      showToast("Lot supprimé avec succès", "success");
-      const updatedLots = await getLotsByImrep(user.uid);
-      setLots(updatedLots);
-    } catch (error: any) {
-      showToast(error.message || "Erreur lors de la suppression", "error");
-    }
-  };
-
   const handleRequestSortie = async (
     lotId: string,
     sortieData: { motif: string; dateSortieDemandee: Date; dateSortieDeclaration: Date; noteSortie?: string }
@@ -91,6 +79,21 @@ export default function DashboardImrepPage() {
     }
   };
 
+  const handleRequestSuppression = async (
+    lotId: string,
+    suppressionData: { motif: import("@/lib/lots/types").MotifSuppression; motifAutre?: string; dateSuppressionDemandee: Date; dateSuppressionDeclaration: Date; noteSuppression?: string }
+  ) => {
+    if (!user) return;
+    try {
+      await requestSuppression(lotId, suppressionData, user.uid);
+      showToast("Demande de suppression créée avec succès", "success");
+      const updatedLots = await getLotsByImrep(user.uid);
+      setLots(updatedLots);
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors de la demande de suppression", "error");
+    }
+  };
+
   if (authLoading || roleLoading || loading) {
     return (
       <DashboardLayout>
@@ -102,10 +105,15 @@ export default function DashboardImrepPage() {
   }
 
   const stats = {
-    total: lots.length,
-    enAttente: lots.filter((l) => l.statut === "en_attente").length,
-    valides: lots.filter((l) => l.statut === "valide").length,
-    refuses: lots.filter((l) => l.statut === "refuse").length,
+    lotsAssures: lots.filter((l) => l.statut === "valide").length,
+    enAttenteValidation: lots.filter((l) => l.statut === "en_attente").length,
+    entreeRefusee: lots.filter((l) => l.statut === "refuse").length,
+    suppressionEnAttente: lots.filter((l) => l.suppression?.statutSuppression === "en_attente_allianz").length,
+    suppressionAcceptee: lots.filter((l) => l.suppression?.statutSuppression === "suppression_validee").length,
+    suppressionRefusee: lots.filter((l) => l.suppression?.statutSuppression === "refusee").length,
+    sortieEnAttente: lots.filter((l) => l.sortie?.statutSortie === "en_attente_allianz").length,
+    sortieValidee: lots.filter((l) => l.sortie?.statutSortie === "sortie_validee").length,
+    sortieRefusee: lots.filter((l) => l.sortie?.statutSortie === "refusee").length,
   };
 
   return (
@@ -131,7 +139,7 @@ export default function DashboardImrepPage() {
           </p>
         </div>
       ) : (
-        <LotsTable lots={filteredLots} role="imrep" onDeleteLot={handleDeleteLot} onRequestSortie={handleRequestSortie} />
+        <LotsTable lots={filteredLots} role="imrep" onRequestSortie={handleRequestSortie} onRequestSuppression={handleRequestSuppression} />
       )}
     </DashboardLayout>
   );

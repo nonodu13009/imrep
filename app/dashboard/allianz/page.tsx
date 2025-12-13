@@ -9,7 +9,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { getAllLots } from "@/lib/lots/queries";
 import { getImrepList } from "@/lib/firebase/users";
 import { Lot, LotStatus } from "@/lib/lots/types";
-import { validateEntree, refuserEntree, validateSortie, refuserSortie } from "@/lib/lots/actions";
+import { validateEntree, refuserEntree, validateSortie, refuserSortie, validateSuppression, refuserSuppression } from "@/lib/lots/actions";
 import StatsCards from "@/components/dashboard/StatsCards";
 import FiltersBar from "@/components/dashboard/FiltersBar";
 import LotsTable from "@/components/dashboard/LotsTable";
@@ -120,6 +120,30 @@ export default function DashboardAllianzPage() {
     }
   };
 
+  const handleValidateSuppression = async (lotId: string) => {
+    if (!user) return;
+    try {
+      await validateSuppression(lotId, user.uid);
+      showToast("Suppression validée avec succès", "success");
+      const updatedLots = await getAllLots();
+      setLots(updatedLots);
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors de la validation", "error");
+    }
+  };
+
+  const handleRefuseSuppression = async (lotId: string, motif: string) => {
+    if (!user) return;
+    try {
+      await refuserSuppression(lotId, motif, user.uid);
+      showToast("Suppression refusée", "success");
+      const updatedLots = await getAllLots();
+      setLots(updatedLots);
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors du refus", "error");
+    }
+  };
+
   if (authLoading || roleLoading || loading) {
     return (
       <DashboardLayout>
@@ -131,11 +155,15 @@ export default function DashboardAllianzPage() {
   }
 
   const stats = {
-    total: lots.length,
-    enAttente: lots.filter((l) => l.statut === "en_attente").length,
-    valides: lots.filter((l) => l.statut === "valide").length,
-    refuses: lots.filter((l) => l.statut === "refuse").length,
-    sortiesEnAttente: lots.filter((l) => l.sortie?.statutSortie === "en_attente_allianz").length,
+    lotsAssures: lots.filter((l) => l.statut === "valide").length,
+    enAttenteValidation: lots.filter((l) => l.statut === "en_attente").length,
+    entreeRefusee: lots.filter((l) => l.statut === "refuse").length,
+    suppressionEnAttente: lots.filter((l) => l.suppression?.statutSuppression === "en_attente_allianz").length,
+    suppressionAcceptee: lots.filter((l) => l.suppression?.statutSuppression === "suppression_validee").length,
+    suppressionRefusee: lots.filter((l) => l.suppression?.statutSuppression === "refusee").length,
+    sortieEnAttente: lots.filter((l) => l.sortie?.statutSortie === "en_attente_allianz").length,
+    sortieValidee: lots.filter((l) => l.sortie?.statutSortie === "sortie_validee").length,
+    sortieRefusee: lots.filter((l) => l.sortie?.statutSortie === "refusee").length,
   };
 
   return (
@@ -167,6 +195,8 @@ export default function DashboardAllianzPage() {
           onRefuseEntree={handleRefuseEntree}
           onValidateSortie={handleValidateSortie}
           onRefuseSortie={handleRefuseSortie}
+          onValidateSuppression={handleValidateSuppression}
+          onRefuseSuppression={handleRefuseSuppression}
         />
       )}
     </DashboardLayout>

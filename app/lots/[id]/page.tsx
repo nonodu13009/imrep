@@ -5,13 +5,14 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
-import { SectionTitle, Button, Card, Badge, ConfirmModal } from "@/components/ui";
+import { SectionTitle, Button, Card, Badge } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getLotById } from "@/lib/lots/queries";
-import { deleteLot } from "@/lib/lots/actions";
+import { requestSuppression } from "@/lib/lots/actions";
 import { Lot, LotStatus } from "@/lib/lots/types";
 import { useToast } from "@/components/ui";
+import SuppressionModal from "@/components/dashboard/SuppressionModal";
 
 export default function LotDetailPage() {
   const { user, loading: authLoading } = useAuth();
@@ -21,7 +22,7 @@ export default function LotDetailPage() {
   const { showToast } = useToast();
   const [lot, setLot] = useState<Lot | null>(null);
   const [loading, setLoading] = useState(true);
-  const [deleteModal, setDeleteModal] = useState(false);
+  const [suppressionModal, setSuppressionModal] = useState(false);
 
   const lotId = params?.id as string;
 
@@ -63,14 +64,18 @@ export default function LotDetailPage() {
     fetchLot();
   }, [user, role, authLoading, roleLoading, router, lotId, showToast]);
 
-  const handleDelete = async () => {
-    if (!user || !lot) return;
+  const handleRequestSuppression = async (
+    suppressionData: { motif: import("@/lib/lots/types").MotifSuppression; motifAutre?: string; dateSuppressionDemandee: Date; dateSuppressionDeclaration: Date; noteSuppression?: string }
+  ) => {
+    if (!lot || !user) return;
     try {
-      await deleteLot(lot.id!, user.uid);
-      showToast("Lot supprimé avec succès", "success");
-      router.push("/dashboard");
+      await requestSuppression(lot.id!, suppressionData, user.uid);
+      showToast("Demande de suppression créée avec succès", "success");
+      const updatedLot = await getLotById(lot.id!);
+      setLot(updatedLot);
+      setSuppressionModal(false);
     } catch (error: any) {
-      showToast(error.message || "Erreur lors de la suppression", "error");
+      showToast(error.message || "Erreur lors de la demande de suppression", "error");
     }
   };
 
@@ -112,7 +117,7 @@ export default function LotDetailPage() {
   }
 
   const canEdit = role === "imrep" && lot.statut === "en_attente" && lot.createdBy === user?.uid;
-  const canDelete = role === "imrep" && lot.statut === "en_attente" && lot.createdBy === user?.uid;
+  const canRequestSuppression = role === "imrep" && lot.statut === "en_attente" && lot.createdBy === user?.uid && !lot.suppression;
 
   return (
     <DashboardLayout>
@@ -134,10 +139,10 @@ export default function LotDetailPage() {
               </Button>
             </Link>
           )}
-          {canDelete && (
-            <Button variant="danger" onClick={() => setDeleteModal(true)}>
+          {canRequestSuppression && (
+            <Button variant="danger" onClick={() => setSuppressionModal(true)}>
               <Trash2 size={18} className="mr-2" />
-              Supprimer
+              Demander la suppression
             </Button>
           )}
         </div>
@@ -153,6 +158,10 @@ export default function LotDetailPage() {
             <div>
               <p className="text-sm text-[var(--color-neutral-500)] mb-1">Code propriétaire</p>
               <p className="text-base font-medium">{lot.codeProprietaire}</p>
+            </div>
+            <div>
+              <p className="text-sm text-[var(--color-neutral-500)] mb-1">Nom du propriétaire</p>
+              <p className="text-base font-medium">{lot.nomProprietaire}</p>
             </div>
             <div>
               <p className="text-sm text-[var(--color-neutral-500)] mb-1">Code lot</p>
@@ -314,15 +323,11 @@ export default function LotDetailPage() {
         )}
       </div>
 
-      {deleteModal && (
-        <ConfirmModal
-          isOpen={deleteModal}
-          onClose={() => setDeleteModal(false)}
-          onConfirm={handleDelete}
-          title="Supprimer le lot"
-          message="Êtes-vous sûr de vouloir supprimer ce lot ? Cette action est irréversible."
-          variant="danger"
-          confirmText="Supprimer"
+      {suppressionModal && (
+        <SuppressionModal
+          isOpen={suppressionModal}
+          onClose={() => setSuppressionModal(false)}
+          onConfirm={handleRequestSuppression}
         />
       )}
     </DashboardLayout>

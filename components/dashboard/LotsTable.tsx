@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Edit, Eye, LogOut as SortieIcon, Check, X, Trash2 } from "lucide-react";
-import { Table, TableRow, TableCell, Badge, Button } from "@/components/ui";
+import { Edit, Eye, LogOut as SortieIcon, Check, X, Trash2, MapPin, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, FileX, Ban } from "lucide-react";
+import { TableRow, TableCell, Badge, Button, Card, Tooltip } from "@/components/ui";
 import { Lot, LotStatus } from "@/lib/lots/types";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import ValidationModal from "./ValidationModal";
 import RefusModal from "./RefusModal";
 import SortieModal from "./SortieModal";
+import SuppressionModal from "./SuppressionModal";
 
 interface LotsTableProps {
   lots: Lot[];
@@ -18,7 +19,9 @@ interface LotsTableProps {
   onValidateSortie?: (lotId: string) => void;
   onRefuseSortie?: (lotId: string, motif: string) => void;
   onRequestSortie?: (lotId: string, sortieData: { motif: string; dateSortieDemandee: Date; dateSortieDeclaration: Date; noteSortie?: string }) => void;
-  onDeleteLot?: (lotId: string) => void;
+  onRequestSuppression?: (lotId: string, suppressionData: { motif: import("@/lib/lots/types").MotifSuppression; motifAutre?: string; dateSuppressionDemandee: Date; dateSuppressionDeclaration: Date; noteSuppression?: string }) => void;
+  onValidateSuppression?: (lotId: string) => void;
+  onRefuseSuppression?: (lotId: string, motif: string) => void;
 }
 
 export default function LotsTable({
@@ -29,12 +32,17 @@ export default function LotsTable({
   onValidateSortie,
   onRefuseSortie,
   onRequestSortie,
-  onDeleteLot,
+  onRequestSuppression,
+  onValidateSuppression,
+  onRefuseSuppression,
 }: LotsTableProps) {
-  const [validationModal, setValidationModal] = useState<{ isOpen: boolean; lotId: string; type: "entree" | "sortie" } | null>(null);
-  const [refusModal, setRefusModal] = useState<{ isOpen: boolean; lotId: string; type: "entree" | "sortie" } | null>(null);
+  const [validationModal, setValidationModal] = useState<{ isOpen: boolean; lotId: string; type: "entree" | "sortie" | "suppression" } | null>(null);
+  const [refusModal, setRefusModal] = useState<{ isOpen: boolean; lotId: string; type: "entree" | "sortie" | "suppression" } | null>(null);
   const [sortieModal, setSortieModal] = useState<{ isOpen: boolean; lotId: string } | null>(null);
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; lotId: string } | null>(null);
+  const [suppressionModal, setSuppressionModal] = useState<{ isOpen: boolean; lotId: string } | null>(null);
+  const [tooltipLotId, setTooltipLotId] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const getStatusBadge = (statut: LotStatus) => {
     const badges = {
@@ -53,22 +61,163 @@ export default function LotsTable({
     }).format(date);
   };
 
-  const headers = role === "allianz" 
-    ? ["Code Lot", "Adresse", "IMREP", "Statut", "Date effet", "Actions"]
-    : ["Code Lot", "Adresse", "Statut", "Date effet", "Actions"];
+  const formatTypeLogement = (type: number) => {
+    return `${type} pièce${type > 1 ? "s" : ""}`;
+  };
+
+  const getFullAddress = (lot: Lot) => {
+    const parts = [lot.adresse];
+    if (lot.complementAdresse) parts.push(lot.complementAdresse);
+    parts.push(`${lot.codePostal} ${lot.ville}`);
+    return parts.join(", ");
+  };
+
+  type SortableColumn = "codeProprietaire" | "codeLot" | "codePostal" | "ville" | "typeLogement" | "statut" | "dateEffetDemandee" | "nomProprietaire";
+
+  const handleSort = (column: SortableColumn) => {
+    if (sortColumn === column) {
+      // Inverser la direction si on clique sur la même colonne
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Nouvelle colonne, trier par ordre croissant
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedLots = useMemo(() => {
+    if (!sortColumn) return lots;
+
+    return [...lots].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortColumn) {
+        case "codeProprietaire":
+          aValue = a.codeProprietaire.toLowerCase();
+          bValue = b.codeProprietaire.toLowerCase();
+          break;
+        case "codeLot":
+          aValue = a.codeLot.toLowerCase();
+          bValue = b.codeLot.toLowerCase();
+          break;
+        case "codePostal":
+          aValue = a.codePostal;
+          bValue = b.codePostal;
+          break;
+        case "ville":
+          aValue = a.ville.toLowerCase();
+          bValue = b.ville.toLowerCase();
+          break;
+        case "typeLogement":
+          aValue = a.typeLogement;
+          bValue = b.typeLogement;
+          break;
+        case "statut":
+          aValue = a.statut;
+          bValue = b.statut;
+          break;
+        case "dateEffetDemandee":
+          aValue = a.dateEffetDemandee.getTime();
+          bValue = b.dateEffetDemandee.getTime();
+          break;
+        case "nomProprietaire":
+          aValue = (a.nomProprietaire || "").toLowerCase();
+          bValue = (b.nomProprietaire || "").toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [lots, sortColumn, sortDirection]);
+
+  const getSortIcon = (column: SortableColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown size={14} className="text-[var(--color-neutral-400)]" />;
+    }
+    return sortDirection === "asc" 
+      ? <ArrowUp size={14} className="text-[var(--color-primary)]" />
+      : <ArrowDown size={14} className="text-[var(--color-primary)]" />;
+  };
+
+  const SortableHeader = ({ label, column, className = "" }: { label: string; column: SortableColumn; className?: string }) => (
+    <th
+      className={`px-6 py-4 text-left uppercase text-xs tracking-wide text-neutral-500 font-semibold cursor-pointer hover:bg-neutral-100 transition-colors ${className}`}
+      onClick={() => handleSort(column)}
+    >
+      <div className="flex items-center gap-2">
+        <span>{label}</span>
+        {getSortIcon(column)}
+      </div>
+    </th>
+  );
 
   return (
     <>
-      <Table headers={headers}>
-        {lots.map((lot) => (
+      <Card className="p-0 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-neutral-50">
+                <SortableHeader label="Code propriétaire" column="codeProprietaire" />
+                <SortableHeader label="Code Lot" column="codeLot" />
+                <th className="px-6 py-4 text-left uppercase text-xs tracking-wide text-neutral-500 font-semibold">
+                  Adresse
+                </th>
+                <SortableHeader label="Code postal" column="codePostal" />
+                <SortableHeader label="Ville" column="ville" />
+                <SortableHeader label="Type" column="typeLogement" />
+                <SortableHeader label="Statut" column="statut" />
+                <SortableHeader label="Date effet" column="dateEffetDemandee" />
+                <th className="px-6 py-4 text-left uppercase text-xs tracking-wide text-neutral-500 font-semibold">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-200">
+        {sortedLots.map((lot) => (
           <TableRow key={lot.id}>
+            <TableCell className="font-medium">{lot.codeProprietaire}</TableCell>
             <TableCell className="font-medium">{lot.codeLot}</TableCell>
-            <TableCell>{lot.adresse}</TableCell>
-            {role === "allianz" && (
-              <TableCell className="text-sm text-[var(--color-neutral-600)]">
-                {lot.createdBy}
-              </TableCell>
-            )}
+            <TableCell>
+              <div className="relative inline-block">
+                <button
+                  onMouseEnter={() => setTooltipLotId(lot.id!)}
+                  onMouseLeave={() => setTooltipLotId(null)}
+                  className="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
+                  aria-label="Voir l'adresse complète"
+                >
+                  <MapPin size={18} />
+                </button>
+                {tooltipLotId === lot.id && (
+                  <div className="absolute z-50 left-0 bottom-full mb-2 w-64">
+                    <div className="relative p-3 bg-[var(--color-dark)] text-white text-sm rounded-[var(--radius-md)] shadow-[var(--shadow-hover)]">
+                      <div className="space-y-1">
+                        <p className="font-medium">{lot.adresse}</p>
+                        {lot.complementAdresse && <p className="text-white/90">{lot.complementAdresse}</p>}
+                        <p className="text-white/90">{lot.codePostal} {lot.ville}</p>
+                        {lot.adresseGarage && (
+                          <div className="mt-2 pt-2 border-t border-white/20">
+                            <p className="text-white/80 text-xs">Garage:</p>
+                            <p className="text-white/90">{lot.adresseGarage}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="absolute left-4 bottom-0 transform translate-y-1/2 rotate-45 w-3 h-3 bg-[var(--color-dark)] rounded-[2px]"></div>
+                  </div>
+                )}
+              </div>
+            </TableCell>
+            <TableCell>{lot.codePostal}</TableCell>
+            <TableCell>{lot.ville}</TableCell>
+            <TableCell className="text-sm text-[var(--color-neutral-600)]">
+              {formatTypeLogement(lot.typeLogement)}
+            </TableCell>
             <TableCell>{getStatusBadge(lot.statut)}</TableCell>
             <TableCell>{formatDate(lot.dateEffetDemandee)}</TableCell>
             <TableCell>
@@ -81,32 +230,42 @@ export default function LotsTable({
 
                 {role === "imrep" && (
                   <>
-                    {lot.statut === "en_attente" && (
+                    {lot.statut === "en_attente" && !lot.suppression && (
                       <>
                         <Link href={`/lots/${lot.id}/edit`}>
                           <Button variant="secondary" className="p-2">
                             <Edit size={16} />
                           </Button>
                         </Link>
-                        {onDeleteLot && (
-                          <Button
-                            variant="danger"
-                            className="p-2"
-                            onClick={() => setDeleteModal({ isOpen: true, lotId: lot.id! })}
+                        {onRequestSuppression && (
+                          <Tooltip
+                            content="Annuler une demande non validée. Motifs : perte de la gestion, vente ou autre."
+                            position="top"
                           >
-                            <Trash2 size={16} />
-                          </Button>
+                            <Button
+                              variant="danger"
+                              className="p-2"
+                              onClick={() => setSuppressionModal({ isOpen: true, lotId: lot.id! })}
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </Tooltip>
                         )}
                       </>
                     )}
                     {lot.statut === "valide" && !lot.sortie && (
-                      <Button
-                        variant="secondary"
-                        className="p-2"
-                        onClick={() => setSortieModal({ isOpen: true, lotId: lot.id! })}
+                      <Tooltip
+                        content="Arrêter la gestion d'un lot déjà assuré. Le lot reste dans le système mais la gestion s'arrête après validation par Allianz."
+                        position="top"
                       >
-                        <SortieIcon size={16} />
-                      </Button>
+                        <Button
+                          variant="secondary"
+                          className="p-2"
+                          onClick={() => setSortieModal({ isOpen: true, lotId: lot.id! })}
+                        >
+                          <SortieIcon size={16} />
+                        </Button>
+                      </Tooltip>
                     )}
                   </>
                 )}
@@ -115,38 +274,74 @@ export default function LotsTable({
                   <>
                     {lot.statut === "en_attente" && (
                       <>
-                        <Button
-                          variant="primary"
-                          className="p-2"
-                          onClick={() => setValidationModal({ isOpen: true, lotId: lot.id!, type: "entree" })}
-                        >
-                          <Check size={16} />
-                        </Button>
-                        <Button
-                          variant="danger"
-                          className="p-2"
-                          onClick={() => setRefusModal({ isOpen: true, lotId: lot.id!, type: "entree" })}
-                        >
-                          <X size={16} />
-                        </Button>
+                        <Tooltip content="Valider l'entrée du lot dans le système. Le lot passera au statut 'Validé' et sera considéré comme assuré." position="top">
+                          <Button
+                            variant="primary"
+                            className="p-2 flex items-center gap-1.5"
+                            onClick={() => setValidationModal({ isOpen: true, lotId: lot.id!, type: "entree" })}
+                          >
+                            <FileCheck size={16} />
+                            <span className="text-xs hidden sm:inline">Valider entrée</span>
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content="Refuser l'entrée du lot. Le lot passera au statut 'Refusé'." position="top">
+                          <Button
+                            variant="danger"
+                            className="p-2 flex items-center gap-1.5"
+                            onClick={() => setRefusModal({ isOpen: true, lotId: lot.id!, type: "entree" })}
+                          >
+                            <FileX size={16} />
+                            <span className="text-xs hidden sm:inline">Refuser entrée</span>
+                          </Button>
+                        </Tooltip>
                       </>
                     )}
                     {lot.sortie?.statutSortie === "en_attente_allianz" && (
                       <>
-                        <Button
-                          variant="primary"
-                          className="p-2"
-                          onClick={() => setValidationModal({ isOpen: true, lotId: lot.id!, type: "sortie" })}
-                        >
-                          <Check size={16} />
-                        </Button>
-                        <Button
-                          variant="danger"
-                          className="p-2"
-                          onClick={() => setRefusModal({ isOpen: true, lotId: lot.id!, type: "sortie" })}
-                        >
-                          <X size={16} />
-                        </Button>
+                        <Tooltip content="Valider la sortie du lot. La gestion s'arrêtera à la date demandée. Le lot restera dans le système mais ne sera plus géré." position="top">
+                          <Button
+                            variant="primary"
+                            className="p-2 flex items-center gap-1.5"
+                            onClick={() => setValidationModal({ isOpen: true, lotId: lot.id!, type: "sortie" })}
+                          >
+                            <SortieIcon size={16} />
+                            <span className="text-xs hidden sm:inline">Valider sortie</span>
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content="Refuser la demande de sortie. Le lot restera dans le système avec son statut actuel." position="top">
+                          <Button
+                            variant="danger"
+                            className="p-2 flex items-center gap-1.5"
+                            onClick={() => setRefusModal({ isOpen: true, lotId: lot.id!, type: "sortie" })}
+                          >
+                            <Ban size={16} />
+                            <span className="text-xs hidden sm:inline">Refuser sortie</span>
+                          </Button>
+                        </Tooltip>
+                      </>
+                    )}
+                    {lot.suppression?.statutSuppression === "en_attente_allianz" && (
+                      <>
+                        <Tooltip content="Valider la suppression du lot. Le lot sera définitivement retiré du système." position="top">
+                          <Button
+                            variant="danger"
+                            className="p-2 flex items-center gap-1.5"
+                            onClick={() => setValidationModal({ isOpen: true, lotId: lot.id!, type: "suppression" })}
+                          >
+                            <Trash2 size={16} />
+                            <span className="text-xs hidden sm:inline">Valider suppression</span>
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content="Refuser la demande de suppression. Le lot restera dans le système avec son statut actuel." position="top">
+                          <Button
+                            variant="secondary"
+                            className="p-2 flex items-center gap-1.5"
+                            onClick={() => setRefusModal({ isOpen: true, lotId: lot.id!, type: "suppression" })}
+                          >
+                            <X size={16} />
+                            <span className="text-xs hidden sm:inline">Refuser suppression</span>
+                          </Button>
+                        </Tooltip>
                       </>
                     )}
                   </>
@@ -155,7 +350,10 @@ export default function LotsTable({
             </TableCell>
           </TableRow>
         ))}
-      </Table>
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       {validationModal && (
         <ValidationModal
@@ -166,11 +364,12 @@ export default function LotsTable({
               onValidateEntree(validationModal.lotId, numeroContrat);
             } else if (validationModal.type === "sortie" && onValidateSortie) {
               onValidateSortie(validationModal.lotId);
+            } else if (validationModal.type === "suppression" && onValidateSuppression) {
+              onValidateSuppression(validationModal.lotId);
             }
             setValidationModal(null);
           }}
-          title={validationModal.type === "entree" ? "Valider l'entrée" : "Valider la sortie"}
-          requireInput={validationModal.type === "entree"}
+          type={validationModal.type}
         />
       )}
 
@@ -183,10 +382,12 @@ export default function LotsTable({
               onRefuseEntree(refusModal.lotId, motif);
             } else if (refusModal.type === "sortie" && onRefuseSortie) {
               onRefuseSortie(refusModal.lotId, motif);
+            } else if (refusModal.type === "suppression" && onRefuseSuppression) {
+              onRefuseSuppression(refusModal.lotId, motif);
             }
             setRefusModal(null);
           }}
-          title={refusModal.type === "entree" ? "Refuser l'entrée" : "Refuser la sortie"}
+          type={refusModal.type}
         />
       )}
 
@@ -203,20 +404,16 @@ export default function LotsTable({
         />
       )}
 
-      {deleteModal && (
-        <ConfirmModal
-          isOpen={deleteModal.isOpen}
-          onClose={() => setDeleteModal(null)}
-          onConfirm={() => {
-            if (onDeleteLot) {
-              onDeleteLot(deleteModal.lotId);
+      {suppressionModal && (
+        <SuppressionModal
+          isOpen={suppressionModal.isOpen}
+          onClose={() => setSuppressionModal(null)}
+          onConfirm={(suppressionData) => {
+            if (onRequestSuppression) {
+              onRequestSuppression(suppressionModal.lotId, suppressionData);
             }
-            setDeleteModal(null);
+            setSuppressionModal(null);
           }}
-          title="Supprimer le lot"
-          message="Êtes-vous sûr de vouloir supprimer ce lot ? Cette action est irréversible."
-          variant="danger"
-          confirmText="Supprimer"
         />
       )}
     </>

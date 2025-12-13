@@ -8,22 +8,48 @@ interface ValidationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (numeroContrat?: string) => void;
-  title: string;
+  type: "entree" | "sortie" | "suppression";
   isLoading?: boolean;
-  requireInput?: boolean;
 }
 
 export default function ValidationModal({
   isOpen,
   onClose,
   onConfirm,
-  title,
+  type,
   isLoading = false,
-  requireInput = true,
 }: ValidationModalProps) {
   const [numeroContrat, setNumeroContrat] = useState("");
 
   if (!isOpen) return null;
+
+  const getTitle = () => {
+    switch (type) {
+      case "entree":
+        return "Valider l'entrée du lot";
+      case "sortie":
+        return "Valider la sortie du lot";
+      case "suppression":
+        return "Valider la suppression du lot";
+      default:
+        return "Valider";
+    }
+  };
+
+  const getMessage = () => {
+    switch (type) {
+      case "entree":
+        return "Vous êtes sur le point de valider l'entrée de ce lot dans le système. Le lot passera au statut 'Validé' et sera considéré comme assuré. Veuillez renseigner le numéro de contrat.";
+      case "sortie":
+        return "Vous êtes sur le point de valider la sortie de ce lot. La gestion du lot s'arrêtera à la date demandée. Le lot restera dans le système mais ne sera plus géré.";
+      case "suppression":
+        return "Vous êtes sur le point de valider la suppression de ce lot. Le lot sera définitivement retiré du système après validation.";
+      default:
+        return "";
+    }
+  };
+
+  const requireInput = type === "entree";
 
   const handleConfirm = () => {
     if (requireInput) {
@@ -38,39 +64,42 @@ export default function ValidationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={onClose}>
       <div
-        className="bg-white rounded-[var(--radius-md)] p-[var(--spacing-md)] max-w-md w-full mx-4 shadow-[var(--shadow-hover)]"
+        className="bg-white rounded-[var(--radius-md)] p-6 max-w-md w-full my-auto shadow-[var(--shadow-hover)] max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[20px] font-semibold text-[var(--color-dark)]">{title}</h3>
+          <h3 className="text-xl font-semibold text-[var(--color-dark)]">{getTitle()}</h3>
           <button
             onClick={onClose}
-            className="text-[var(--color-neutral-500)] hover:text-[var(--color-neutral-600)] transition-colors"
+            className="text-[var(--color-neutral-500)] hover:text-[var(--color-neutral-600)] transition-colors p-1"
             aria-label="Fermer"
           >
             <X size={20} />
           </button>
         </div>
 
+        <p className="text-base text-[var(--color-neutral-600)] mb-6">{getMessage()}</p>
+
         {requireInput && (
-          <Input
-            label="Numéro de contrat"
-            value={numeroContrat}
-            onChange={(e) => setNumeroContrat(e.target.value)}
-            placeholder="Entrez le numéro de contrat"
-            required
-            className="mb-6"
-          />
+          <div className="mb-6">
+            <Input
+              label="Numéro de contrat *"
+              value={numeroContrat}
+              onChange={(e) => setNumeroContrat(e.target.value)}
+              placeholder="Entrez le numéro de contrat"
+              required
+            />
+          </div>
         )}
 
-        <div className="flex gap-3 justify-end">
+        <div className="flex gap-3 justify-end pt-4 border-t border-[var(--color-neutral-200)]">
           <Button variant="secondary" onClick={onClose} disabled={isLoading}>
             Annuler
           </Button>
           <Button variant="primary" onClick={handleConfirm} isLoading={isLoading} disabled={requireInput && !numeroContrat.trim()}>
-            Confirmer
+            Confirmer la validation
           </Button>
         </div>
       </div>

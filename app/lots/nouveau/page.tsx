@@ -9,7 +9,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { createLot } from "@/lib/lots/actions";
 import { Etage, TypeLogement } from "@/lib/lots/types";
 import { useToast } from "@/components/ui";
-import { capitalizeAddress } from "@/lib/utils/capitalize";
+import { capitalizeAddress, capitalizeName } from "@/lib/utils/capitalize";
 
 export default function NouveauLotPage() {
   const { user, loading: authLoading } = useAuth();
@@ -19,6 +19,7 @@ export default function NouveauLotPage() {
 
   // Champs obligatoires
   const [codeProprietaire, setCodeProprietaire] = useState("");
+  const [nomProprietaire, setNomProprietaire] = useState("");
   const [codeLot, setCodeLot] = useState("");
   const [adresse, setAdresse] = useState("");
   const [codePostal, setCodePostal] = useState("");
@@ -65,6 +66,10 @@ export default function NouveauLotPage() {
 
     if (!codeProprietaire.trim()) {
       newErrors.codeProprietaire = "Le code propriétaire est obligatoire";
+    }
+
+    if (!nomProprietaire.trim()) {
+      newErrors.nomProprietaire = "Le nom du propriétaire est obligatoire";
     }
 
     if (!codeLot.trim()) {
@@ -122,6 +127,7 @@ export default function NouveauLotPage() {
     try {
       const lotData = {
         codeProprietaire: codeProprietaire.trim(),
+        nomProprietaire: nomProprietaire.trim(),
         codeLot: codeLot.trim(),
         adresse: adresse.trim(),
         codePostal: codePostal.trim(),
@@ -169,22 +175,30 @@ export default function NouveauLotPage() {
               Informations principales
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--spacing-sm)]">
-              <Input
-                label="Code propriétaire *"
-                value={codeProprietaire}
-                onChange={(e) => setCodeProprietaire(e.target.value)}
-                error={errors.codeProprietaire}
-                required
-              />
-              <Input
-                label="Code lot *"
-                value={codeLot}
-                onChange={(e) => setCodeLot(e.target.value)}
-                error={errors.codeLot}
-                required
-              />
-            </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--spacing-sm)]">
+                    <Input
+                      label="Code propriétaire *"
+                      value={codeProprietaire}
+                      onChange={(e) => setCodeProprietaire(e.target.value)}
+                      error={errors.codeProprietaire}
+                      required
+                    />
+                    <Input
+                      label="Code lot *"
+                      value={codeLot}
+                      onChange={(e) => setCodeLot(e.target.value)}
+                      error={errors.codeLot}
+                      required
+                    />
+                  </div>
+
+                  <Input
+                    label="Nom du propriétaire *"
+                    value={nomProprietaire}
+                    onChange={(e) => setNomProprietaire(capitalizeName(e.target.value))}
+                    error={errors.nomProprietaire}
+                    required
+                  />
 
             <Input
               label="Adresse *"

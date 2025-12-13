@@ -9,5 +9,6 @@ export { default as SectionTitle } from "./SectionTitle";
 export { default as Label } from "./Label";
 export { default as Select } from "./Select";
 export { default as ConfirmModal } from "./ConfirmModal";
+export { default as Tooltip } from "./Tooltip";
 export { ToastProvider, useToast } from "./ToastProvider";
 

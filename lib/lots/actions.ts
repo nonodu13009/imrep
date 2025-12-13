@@ -2,7 +2,27 @@ import { collection, doc, setDoc, updateDoc, arrayUnion, Timestamp } from "fireb
 import { db } from "@/lib/firebase/config";
 import { getUserRole } from "@/lib/firebase/users";
 import { getLotById } from "./queries";
-import { Lot, LotStatus, Sortie, HistoryEntry, HistoryType } from "./types";
+import { Lot, LotStatus, Sortie, Suppression, HistoryEntry, HistoryType } from "./types";
+
+// Helper function to remove undefined values from an object recursively
+function removeUndefinedValues(obj: Record<string, any>): Record<string, any> {
+  const cleaned: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      if (value instanceof Date) {
+        cleaned[key] = value;
+      } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+        const cleanedNested = removeUndefinedValues(value);
+        if (Object.keys(cleanedNested).length > 0) {
+          cleaned[key] = cleanedNested;
+        }
+      } else {
+        cleaned[key] = value;
+      }
+    }
+  }
+  return cleaned;
+}
 
 export async function createLot(lotData: Omit<Lot, "id" | "statut" | "createdAt" | "updatedAt" | "history" | "createdBy">, userId: string): Promise<string> {
   try {
@@ -23,13 +43,7 @@ export async function createLot(lotData: Omit<Lot, "id" | "statut" | "createdAt"
     const lotRef = doc(collection(db, "lots"));
     
     // Filtrer les valeurs undefined pour Firestore
-    const cleanLotData: Record<string, any> = {};
-    Object.keys(lotData).forEach((key) => {
-      const value = lotData[key as keyof typeof lotData];
-      if (value !== undefined) {
-        cleanLotData[key] = value;
-      }
-    });
+    const cleanLotData = removeUndefinedValues(lotData as Record<string, any>);
 
     const historyEntry: HistoryEntry = {
       type: "creation",
@@ -91,21 +105,15 @@ export async function updateLot(lotId: string, updates: Partial<Lot>, userId: st
       return;
     }
 
+    // Filtrer les valeurs undefined pour Firestore
+    const cleanChangedFields = removeUndefinedValues(changedFields);
+
     const historyEntry: HistoryEntry = {
       type: "modification",
       timestamp: new Date(),
       userId,
-      data: changedFields,
+      data: cleanChangedFields,
     };
-
-    // Filtrer les valeurs undefined pour Firestore
-    const cleanChangedFields: Record<string, any> = {};
-    Object.keys(changedFields).forEach((key) => {
-      const value = changedFields[key];
-      if (value !== undefined) {
-        cleanChangedFields[key] = value;
-      }
-    });
 
     const updateData: any = {
       ...cleanChangedFields,
@@ -155,20 +163,29 @@ export async function requestSortie(lotId: string, sortieData: Omit<Sortie, "sta
       throw new Error("La date de sortie ne peut pas être dans le passé");
     }
 
+    const historyData = removeUndefinedValues({
+      motif: sortieData.motif,
+      dateSortieDemandee: sortieData.dateSortieDemandee,
+      dateSortieDeclaration: sortieData.dateSortieDeclaration,
+      noteSortie: sortieData.noteSortie,
+    });
+
     const historyEntry: HistoryEntry = {
       type: "demande_sortie",
       timestamp: new Date(),
       userId,
-      data: { motif: sortieData.motif, dateSortieDemandee: sortieData.dateSortieDemandee },
+      data: historyData,
     };
 
+    const sortieDataClean = removeUndefinedValues({
+      ...sortieData,
+      statutSortie: "en_attente_allianz",
+      dateSortieDemandee: Timestamp.fromDate(sortieData.dateSortieDemandee),
+      dateSortieDeclaration: Timestamp.fromDate(sortieData.dateSortieDeclaration),
+    });
+
     await updateDoc(doc(db, "lots", lotId), {
-      sortie: {
-        ...sortieData,
-        statutSortie: "en_attente_allianz",
-        dateSortieDemandee: Timestamp.fromDate(sortieData.dateSortieDemandee),
-        dateSortieDeclaration: Timestamp.fromDate(sortieData.dateSortieDeclaration),
-      },
+      sortie: sortieDataClean,
       updatedAt: Timestamp.now(),
       history: arrayUnion(historyEntry),
     });
@@ -332,11 +349,15 @@ export async function refuserSortie(lotId: string, motifRefus: string, validated
   }
 }
 
-export async function deleteLot(lotId: string, userId: string): Promise<void> {
+export async function requestSuppression(
+  lotId: string,
+  suppressionData: Omit<import("./types").Suppression, "statutSuppression" | "validatedBy">,
+  userId: string
+): Promise<void> {
   try {
     const role = await getUserRole(userId);
     if (role !== "imrep") {
-      throw new Error("Seuls les utilisateurs IMREP peuvent supprimer des lots");
+      throw new Error("Seuls les utilisateurs IMREP peuvent demander la suppression d'un lot");
     }
 
     const lot = await getLotById(lotId);
@@ -345,25 +366,132 @@ export async function deleteLot(lotId: string, userId: string): Promise<void> {
     }
 
     if (lot.statut !== "en_attente") {
-      throw new Error("Seuls les lots en attente peuvent être supprimés");
+      throw new Error("Seuls les lots en attente peuvent faire l'objet d'une demande de suppression");
     }
 
     if (lot.createdBy !== userId) {
-      throw new Error("Vous ne pouvez supprimer que vos propres lots");
+      throw new Error("Vous ne pouvez demander la suppression que de vos propres lots");
     }
 
-    // Suppression du document
-    await updateDoc(doc(db, "lots", lotId), {
-      statut: "refuse" as LotStatus, // On marque comme refusé plutôt que de supprimer pour garder l'historique
-      motifRefus: "Supprimé par l'IMREP",
-      updatedAt: Timestamp.now(),
+    if (lot.suppression && (lot.suppression.statutSuppression === "en_attente_allianz" || lot.suppression.statutSuppression === "suppression_validee")) {
+      throw new Error("Une demande de suppression est déjà en cours ou validée");
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateSuppression = suppressionData.dateSuppressionDemandee;
+    dateSuppression.setHours(0, 0, 0, 0);
+
+    if (dateSuppression < today) {
+      throw new Error("La date de suppression ne peut pas être dans le passé");
+    }
+
+    const historyData = removeUndefinedValues({
+      motif: suppressionData.motif,
+      motifAutre: suppressionData.motifAutre,
+      dateSuppressionDemandee: suppressionData.dateSuppressionDemandee,
+      dateSuppressionDeclaration: suppressionData.dateSuppressionDeclaration,
+      noteSuppression: suppressionData.noteSuppression,
     });
 
-    // Note: On ne supprime pas vraiment le document pour garder l'historique
-    // Si vous voulez une vraie suppression, utilisez deleteDoc au lieu de updateDoc
-    // await deleteDoc(doc(db, "lots", lotId));
+    const historyEntry: HistoryEntry = {
+      type: "demande_suppression",
+      timestamp: new Date(),
+      userId,
+      data: historyData,
+    };
+
+    const suppressionDataClean = removeUndefinedValues({
+      ...suppressionData,
+      statutSuppression: "en_attente_allianz",
+      dateSuppressionDemandee: Timestamp.fromDate(suppressionData.dateSuppressionDemandee),
+      dateSuppressionDeclaration: Timestamp.fromDate(suppressionData.dateSuppressionDeclaration),
+    });
+
+    await updateDoc(doc(db, "lots", lotId), {
+      suppression: suppressionDataClean,
+      updatedAt: Timestamp.now(),
+      history: arrayUnion(historyEntry),
+    });
   } catch (error) {
-    console.error("Erreur lors de la suppression du lot:", error);
+    console.error("Erreur lors de la demande de suppression:", error);
+    throw error;
+  }
+}
+
+export async function validateSuppression(lotId: string, validatedBy: string): Promise<void> {
+  try {
+    const role = await getUserRole(validatedBy);
+    if (role !== "allianz") {
+      throw new Error("Seuls les utilisateurs Allianz peuvent valider une suppression");
+    }
+
+    const lot = await getLotById(lotId);
+    if (!lot) {
+      throw new Error("Lot non trouvé");
+    }
+
+    if (!lot.suppression || lot.suppression.statutSuppression !== "en_attente_allianz") {
+      throw new Error("Aucune demande de suppression en attente pour ce lot");
+    }
+
+    const historyEntry: HistoryEntry = {
+      type: "validation_suppression",
+      timestamp: new Date(),
+      userId: validatedBy,
+      data: {},
+    };
+
+    // Marquer le lot comme refusé (suppression validée)
+    await updateDoc(doc(db, "lots", lotId), {
+      statut: "refuse" as LotStatus,
+      motifRefus: "Suppression validée par Allianz",
+      "suppression.statutSuppression": "suppression_validee",
+      "suppression.validatedBy": validatedBy,
+      updatedAt: Timestamp.now(),
+      history: arrayUnion(historyEntry),
+    });
+  } catch (error) {
+    console.error("Erreur lors de la validation de la suppression:", error);
+    throw error;
+  }
+}
+
+export async function refuserSuppression(lotId: string, motifRefus: string, validatedBy: string): Promise<void> {
+  try {
+    const role = await getUserRole(validatedBy);
+    if (role !== "allianz") {
+      throw new Error("Seuls les utilisateurs Allianz peuvent refuser une suppression");
+    }
+
+    const lot = await getLotById(lotId);
+    if (!lot) {
+      throw new Error("Lot non trouvé");
+    }
+
+    if (!lot.suppression || lot.suppression.statutSuppression !== "en_attente_allianz") {
+      throw new Error("Aucune demande de suppression en attente pour ce lot");
+    }
+
+    if (!motifRefus || motifRefus.trim() === "") {
+      throw new Error("Le motif de refus est obligatoire");
+    }
+
+    const historyEntry: HistoryEntry = {
+      type: "refus_suppression",
+      timestamp: new Date(),
+      userId: validatedBy,
+      data: { motifRefus },
+    };
+
+    await updateDoc(doc(db, "lots", lotId), {
+      "suppression.statutSuppression": "refusee",
+      "suppression.validatedBy": validatedBy,
+      updatedAt: Timestamp.now(),
+      history: arrayUnion(historyEntry),
+    });
+  } catch (error) {
+    console.error("Erreur lors du refus de la suppression:", error);
     throw error;
   }
 }

@@ -25,6 +25,15 @@ export async function getLotsByImrep(uid: string): Promise<Lot[]> {
             dateSortieDeclaration: doc.data().sortie.dateSortieDeclaration?.toDate() ?? new Date(),
           }
         : undefined,
+      suppression: doc.data().suppression
+        ? {
+            ...doc.data().suppression,
+            dateSuppressionDemandee:
+              (doc.data().suppression.dateSuppressionDemandee as any)?.toDate?.() ?? new Date(doc.data().suppression.dateSuppressionDemandee),
+            dateSuppressionDeclaration:
+              (doc.data().suppression.dateSuppressionDeclaration as any)?.toDate?.() ?? new Date(doc.data().suppression.dateSuppressionDeclaration),
+          }
+        : undefined,
       history: doc.data().history?.map((h: any) => ({
         ...h,
         timestamp: h.timestamp?.toDate() ?? new Date(),
@@ -57,6 +66,15 @@ export async function getAllLots(): Promise<Lot[]> {
             dateSortieDeclaration: doc.data().sortie.dateSortieDeclaration?.toDate() ?? new Date(),
           }
         : undefined,
+      suppression: doc.data().suppression
+        ? {
+            ...doc.data().suppression,
+            dateSuppressionDemandee:
+              (doc.data().suppression.dateSuppressionDemandee as any)?.toDate?.() ?? new Date(doc.data().suppression.dateSuppressionDemandee),
+            dateSuppressionDeclaration:
+              (doc.data().suppression.dateSuppressionDeclaration as any)?.toDate?.() ?? new Date(doc.data().suppression.dateSuppressionDeclaration),
+          }
+        : undefined,
       history: doc.data().history?.map((h: any) => ({
         ...h,
         timestamp: h.timestamp?.toDate() ?? new Date(),
@@ -87,6 +105,15 @@ export async function getLotById(lotId: string): Promise<Lot | null> {
               (lot.sortie.dateSortieDemandee as any)?.toDate?.() ?? new Date(lot.sortie.dateSortieDemandee),
             dateSortieDeclaration:
               (lot.sortie.dateSortieDeclaration as any)?.toDate?.() ?? new Date(lot.sortie.dateSortieDeclaration),
+          }
+        : undefined,
+      suppression: lot.suppression
+        ? {
+            ...lot.suppression,
+            dateSuppressionDemandee:
+              (lot.suppression.dateSuppressionDemandee as any)?.toDate?.() ?? new Date(lot.suppression.dateSuppressionDemandee),
+            dateSuppressionDeclaration:
+              (lot.suppression.dateSuppressionDeclaration as any)?.toDate?.() ?? new Date(lot.suppression.dateSuppressionDeclaration),
           }
         : undefined,
       history: lot.history?.map((h: any) => ({

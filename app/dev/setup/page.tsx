@@ -146,12 +146,18 @@ export default function DevSetupPage() {
           </ul>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-[#e5e7eb]">
+        <div className="mt-4 pt-4 border-t border-[#e5e7eb] space-y-2">
           <a
             href="/dev/mock-lots"
             className="block w-full text-center px-4 py-2 bg-[var(--color-primary)] text-white rounded-[var(--radius-md)] hover:bg-[var(--color-primary-hover)] transition-colors text-sm font-medium"
           >
             Générer 20 lots mockés →
+          </a>
+          <a
+            href="/dev/update-proprietaires"
+            className="block w-full text-center px-4 py-2 bg-[var(--color-secondary)] text-white rounded-[var(--radius-md)] hover:opacity-90 transition-colors text-sm font-medium"
+          >
+            Mettre à jour les noms de propriétaires →
           </a>
         </div>
       </Card>

@@ -12,7 +12,7 @@ import { getLotById } from "@/lib/lots/queries";
 import { updateLot } from "@/lib/lots/actions";
 import { Etage, TypeLogement, Lot } from "@/lib/lots/types";
 import { useToast } from "@/components/ui";
-import { capitalizeAddress } from "@/lib/utils/capitalize";
+import { capitalizeAddress, capitalizeName } from "@/lib/utils/capitalize";
 
 export default function EditLotPage() {
   const { user, loading: authLoading } = useAuth();
@@ -26,6 +26,7 @@ export default function EditLotPage() {
 
   // États du formulaire
   const [codeProprietaire, setCodeProprietaire] = useState("");
+  const [nomProprietaire, setNomProprietaire] = useState("");
   const [codeLot, setCodeLot] = useState("");
   const [adresse, setAdresse] = useState("");
   const [codePostal, setCodePostal] = useState("");
@@ -82,6 +83,7 @@ export default function EditLotPage() {
         setLot(lotData);
         // Remplir le formulaire
         setCodeProprietaire(lotData.codeProprietaire);
+        setNomProprietaire(lotData.nomProprietaire);
         setCodeLot(lotData.codeLot);
         setAdresse(lotData.adresse);
         setCodePostal(lotData.codePostal);
@@ -111,6 +113,10 @@ export default function EditLotPage() {
 
     if (!codeProprietaire.trim()) {
       newErrors.codeProprietaire = "Le code propriétaire est obligatoire";
+    }
+
+    if (!nomProprietaire.trim()) {
+      newErrors.nomProprietaire = "Le nom du propriétaire est obligatoire";
     }
 
     if (!codeLot.trim()) {
@@ -170,6 +176,7 @@ export default function EditLotPage() {
         lot.id!,
         {
           codeProprietaire: codeProprietaire.trim(),
+          nomProprietaire: nomProprietaire.trim(),
           codeLot: codeLot.trim(),
           adresse: adresse.trim(),
           codePostal: codePostal.trim(),
@@ -250,6 +257,14 @@ export default function EditLotPage() {
                 required
               />
             </div>
+
+            <Input
+              label="Nom du propriétaire *"
+              value={nomProprietaire}
+              onChange={(e) => setNomProprietaire(capitalizeName(e.target.value))}
+              error={errors.nomProprietaire}
+              required
+            />
 
             <Input
               label="Adresse *"
