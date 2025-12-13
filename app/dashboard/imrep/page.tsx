@@ -24,6 +24,9 @@ export default function DashboardImrepPage() {
   const [lots, setLots] = useState<Lot[]>([]);
   const [filteredLots, setFilteredLots] = useState<Lot[]>([]);
   const [statusFilter, setStatusFilter] = useState<LotStatus | "all">("all");
+  const [proprietaireFilter, setProprietaireFilter] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("");
+  const [codePostalFilter, setCodePostalFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,12 +60,33 @@ export default function DashboardImrepPage() {
   }, [user, role, authLoading, roleLoading, router, showToast]);
 
   useEffect(() => {
-    if (statusFilter === "all") {
-      setFilteredLots(lots);
-    } else {
-      setFilteredLots(lots.filter((lot) => lot.statut === statusFilter));
+    let filtered = lots;
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((lot) => lot.statut === statusFilter);
     }
-  }, [statusFilter, lots]);
+
+    if (proprietaireFilter) {
+      filtered = filtered.filter((lot) => lot.codeProprietaire === proprietaireFilter);
+    }
+
+    if (typeFilter) {
+      filtered = filtered.filter((lot) => lot.typeLogement === Number(typeFilter));
+    }
+
+    if (codePostalFilter) {
+      filtered = filtered.filter((lot) => lot.codePostal === codePostalFilter);
+    }
+
+    setFilteredLots(filtered);
+  }, [statusFilter, proprietaireFilter, typeFilter, codePostalFilter, lots]);
+
+  const handleResetFilters = () => {
+    setStatusFilter("all");
+    setProprietaireFilter("");
+    setTypeFilter("");
+    setCodePostalFilter("");
+  };
 
   const handleRequestSortie = async (
     lotId: string,
@@ -107,13 +131,9 @@ export default function DashboardImrepPage() {
   const stats = {
     lotsAssures: lots.filter((l) => l.statut === "valide").length,
     enAttenteValidation: lots.filter((l) => l.statut === "en_attente").length,
-    entreeRefusee: lots.filter((l) => l.statut === "refuse").length,
-    suppressionEnAttente: lots.filter((l) => l.suppression?.statutSuppression === "en_attente_allianz").length,
     suppressionAcceptee: lots.filter((l) => l.suppression?.statutSuppression === "suppression_validee").length,
-    suppressionRefusee: lots.filter((l) => l.suppression?.statutSuppression === "refusee").length,
     sortieEnAttente: lots.filter((l) => l.sortie?.statutSortie === "en_attente_allianz").length,
     sortieValidee: lots.filter((l) => l.sortie?.statutSortie === "sortie_validee").length,
-    sortieRefusee: lots.filter((l) => l.sortie?.statutSortie === "refusee").length,
   };
 
   return (
@@ -128,9 +148,20 @@ export default function DashboardImrepPage() {
         </Link>
       </div>
 
-      <StatsCards {...stats} />
+      <StatsCards {...stats} lots={lots} />
 
-      <FiltersBar statusFilter={statusFilter} onStatusChange={setStatusFilter} />
+      <FiltersBar
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        proprietaireFilter={proprietaireFilter}
+        onProprietaireChange={setProprietaireFilter}
+        typeFilter={typeFilter}
+        onTypeChange={setTypeFilter}
+        codePostalFilter={codePostalFilter}
+        onCodePostalChange={setCodePostalFilter}
+        lots={lots}
+        onReset={handleResetFilters}
+      />
 
       {filteredLots.length === 0 ? (
         <div className="text-center py-[40px]">

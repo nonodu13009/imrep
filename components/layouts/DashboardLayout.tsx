@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { LogOut, LayoutDashboard, Users, FileText } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { logoutUser } from "@/lib/firebase/auth";
@@ -77,6 +77,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <span>Utilisateurs</span>
                   </Link>
                 )}
+                <Link
+                  href="/aide"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-colors ${
+                    pathname === "/aide"
+                      ? "bg-white text-[var(--color-primary)] font-medium"
+                      : "text-white/90 hover:bg-white/20 hover:text-white"
+                  }`}
+                >
+                  <HelpCircle size={18} />
+                  <span>Aide</span>
+                </Link>
               </nav>
             </div>
             <div className="flex items-center gap-4">

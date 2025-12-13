@@ -25,6 +25,9 @@ export default function DashboardAllianzPage() {
   const [imrepList, setImrepList] = useState<Array<{ id: string; email: string }>>([]);
   const [statusFilter, setStatusFilter] = useState<LotStatus | "all">("all");
   const [imrepFilter, setImrepFilter] = useState<string>("all");
+  const [proprietaireFilter, setProprietaireFilter] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("");
+  const [codePostalFilter, setCodePostalFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -69,8 +72,28 @@ export default function DashboardAllianzPage() {
       filtered = filtered.filter((lot) => lot.createdBy === imrepFilter);
     }
 
+    if (proprietaireFilter) {
+      filtered = filtered.filter((lot) => lot.codeProprietaire === proprietaireFilter);
+    }
+
+    if (typeFilter) {
+      filtered = filtered.filter((lot) => lot.typeLogement === Number(typeFilter));
+    }
+
+    if (codePostalFilter) {
+      filtered = filtered.filter((lot) => lot.codePostal === codePostalFilter);
+    }
+
     setFilteredLots(filtered);
-  }, [statusFilter, imrepFilter, lots]);
+  }, [statusFilter, imrepFilter, proprietaireFilter, typeFilter, codePostalFilter, lots]);
+
+  const handleResetFilters = () => {
+    setStatusFilter("all");
+    setImrepFilter("all");
+    setProprietaireFilter("");
+    setTypeFilter("");
+    setCodePostalFilter("");
+  };
 
   const handleValidateEntree = async (lotId: string, numeroContrat: string) => {
     if (!user) return;
@@ -157,20 +180,16 @@ export default function DashboardAllianzPage() {
   const stats = {
     lotsAssures: lots.filter((l) => l.statut === "valide").length,
     enAttenteValidation: lots.filter((l) => l.statut === "en_attente").length,
-    entreeRefusee: lots.filter((l) => l.statut === "refuse").length,
-    suppressionEnAttente: lots.filter((l) => l.suppression?.statutSuppression === "en_attente_allianz").length,
     suppressionAcceptee: lots.filter((l) => l.suppression?.statutSuppression === "suppression_validee").length,
-    suppressionRefusee: lots.filter((l) => l.suppression?.statutSuppression === "refusee").length,
     sortieEnAttente: lots.filter((l) => l.sortie?.statutSortie === "en_attente_allianz").length,
     sortieValidee: lots.filter((l) => l.sortie?.statutSortie === "sortie_validee").length,
-    sortieRefusee: lots.filter((l) => l.sortie?.statutSortie === "refusee").length,
   };
 
   return (
     <DashboardLayout>
       <SectionTitle>Gestion des lots</SectionTitle>
 
-      <StatsCards {...stats} />
+      <StatsCards {...stats} lots={lots} />
 
       <FiltersBar
         statusFilter={statusFilter}
@@ -179,6 +198,14 @@ export default function DashboardAllianzPage() {
         onImrepChange={setImrepFilter}
         imrepList={imrepList}
         showImrepFilter={true}
+        proprietaireFilter={proprietaireFilter}
+        onProprietaireChange={setProprietaireFilter}
+        typeFilter={typeFilter}
+        onTypeChange={setTypeFilter}
+        codePostalFilter={codePostalFilter}
+        onCodePostalChange={setCodePostalFilter}
+        lots={lots}
+        onReset={handleResetFilters}
       />
 
       {filteredLots.length === 0 ? (

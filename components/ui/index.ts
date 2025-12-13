@@ -10,5 +10,6 @@ export { default as Label } from "./Label";
 export { default as Select } from "./Select";
 export { default as ConfirmModal } from "./ConfirmModal";
 export { default as Tooltip } from "./Tooltip";
+export { default as PieChart } from "./PieChart";
 export { ToastProvider, useToast } from "./ToastProvider";
 
