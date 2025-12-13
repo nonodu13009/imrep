@@ -28,8 +28,11 @@ export async function registerUser(email: string, password: string, displayName?
     }
     
     return userCredential.user;
-  } catch (error) {
-    console.error("Erreur lors de l'inscription:", error);
+  } catch (error: any) {
+    // Ne pas logger l'erreur si c'est juste un email déjà utilisé
+    if (error?.code !== "auth/email-already-in-use") {
+      console.error("Erreur lors de l'inscription:", error);
+    }
     throw error;
   }
 }

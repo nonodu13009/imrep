@@ -4,26 +4,33 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 import BackgroundImage from "@/components/BackgroundImage";
-import { Button, Input, Card, SectionTitle } from "@/components/ui";
+import { Button, Input, Card, SectionTitle, useToast } from "@/components/ui";
+import { loginUser } from "@/lib/firebase/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // TODO: Implémenter la logique de connexion Firebase
-    console.log("Connexion:", { email, password });
-    
-    // Simuler un délai
-    setTimeout(() => {
+    try {
+      await loginUser(email, password);
+      showToast("Connexion réussie", "success");
+      router.push("/dashboard");
+    } catch (error: any) {
+      console.error("Erreur de connexion:", error);
+      showToast(error.message || "Erreur de connexion", "error");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -102,13 +109,64 @@ export default function LoginPage() {
                 </div>
               </form>
 
-              <div className="text-center text-sm text-[#475569]">
+              <div className="text-center space-y-2">
                 <Link
                   href="/"
-                  className="text-[#2563eb] hover:text-[#1d4ed8] underline"
+                  className="text-sm text-[#2563eb] hover:text-[#1d4ed8] underline block"
                 >
                   Retour à l'accueil
                 </Link>
+                <Link
+                  href="/dev/setup"
+                  className="text-xs text-[#64748b] hover:text-[#475569] underline block"
+                >
+                  Créer les utilisateurs de test
+                </Link>
+              </div>
+
+              {/* Boutons de connexion rapide - DEV uniquement */}
+              <div className="pt-4 border-t border-[#e5e7eb]">
+                <p className="text-xs text-[#64748b] mb-3 text-center">Connexion rapide (DEV)</p>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={async () => {
+                      setIsLoading(true);
+                      try {
+                        await loginUser("jeanmichel@allianz-nogaro.fr", "allianz");
+                        showToast("Connexion réussie", "success");
+                        router.push("/dashboard");
+                      } catch (error: any) {
+                        console.error("Erreur de connexion:", error);
+                        showToast(error.message || "Erreur de connexion", "error");
+                        setIsLoading(false);
+                      }
+                    }}
+                    disabled={isLoading}
+                    className="w-full text-sm"
+                  >
+                    🔵 Admin Allianz
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={async () => {
+                      setIsLoading(true);
+                      try {
+                        await loginUser("imrep@test.fr", "imrep1234");
+                        showToast("Connexion réussie", "success");
+                        router.push("/dashboard");
+                      } catch (error: any) {
+                        console.error("Erreur de connexion:", error);
+                        showToast(error.message || "Erreur de connexion", "error");
+                        setIsLoading(false);
+                      }
+                    }}
+                    disabled={isLoading}
+                    className="w-full text-sm"
+                  >
+                    🟢 IMREP Test
+                  </Button>
+                </div>
               </div>
             </div>
           </Card>
