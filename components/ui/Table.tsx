@@ -39,7 +39,7 @@ interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
 export function TableRow({ children, className = "", ...props }: TableRowProps) {
   return (
     <tr
-      className={`hover:bg-neutral-50 transition-colors duration-200 ${className}`}
+      className={`hover:bg-[var(--color-neutral-50)] transition-all duration-[var(--transition-base)] hover:shadow-sm ${className}`}
       {...props}
     >
       {children}

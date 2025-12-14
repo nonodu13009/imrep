@@ -8,7 +8,7 @@ import { LogOut, LayoutDashboard, Users, HelpCircle, FileText } from "lucide-rea
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { logoutUser } from "@/lib/firebase/auth";
-import { Button } from "@/components/ui";
+import { Button, Breadcrumb } from "@/components/ui";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -27,6 +27,36 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
     }
+  };
+
+  const getBreadcrumbItems = (path: string) => {
+    const items: Array<{ label: string; href?: string }> = [];
+    const pathParts = path.split("/").filter(Boolean);
+
+    if (pathParts.length === 0) return items;
+
+    // Ignorer "dashboard" comme premier élément
+    if (pathParts[0] === "dashboard") {
+      pathParts.shift();
+    }
+
+    // Construire les breadcrumbs
+    let currentPath = "";
+    pathParts.forEach((part, index) => {
+      currentPath += `/${part}`;
+      const label = part
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+
+      if (index === pathParts.length - 1) {
+        items.push({ label });
+      } else {
+        items.push({ label, href: currentPath });
+      }
+    });
+
+    return items;
   };
 
   if (loading) {
@@ -55,10 +85,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <nav className="hidden md:flex items-center gap-2">
                 <Link
                   href="/dashboard"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-all duration-[var(--transition-base)] relative ${
                     pathname?.startsWith("/dashboard") && !pathname?.startsWith("/dashboard/imrep") && !pathname?.startsWith("/dashboard/allianz")
-                      ? "bg-white text-[var(--color-primary)] font-medium"
-                      : "text-white/90 hover:bg-white/20 hover:text-white"
+                      ? "bg-white text-[var(--color-primary)] font-medium shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-white after:rounded-full"
+                      : "text-white/90 hover:bg-white/20 hover:text-white hover:scale-105"
                   }`}
                 >
                   <LayoutDashboard size={18} />
@@ -67,10 +97,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 {role === "allianz" && (
                   <Link
                     href="/utilisateurs"
-                    className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-all duration-[var(--transition-base)] ${
                       pathname === "/utilisateurs"
-                        ? "bg-white text-[var(--color-primary)] font-medium"
-                        : "text-white/90 hover:bg-white/20 hover:text-white"
+                        ? "bg-white text-[var(--color-primary)] font-medium shadow-sm"
+                        : "text-white/90 hover:bg-white/20 hover:text-white hover:scale-105"
                     }`}
                   >
                     <Users size={18} />
@@ -80,10 +110,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 {(role === "imrep" || role === "allianz") && (
                   <Link
                     href="/journal"
-                    className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-all duration-[var(--transition-base)] ${
                       pathname === "/journal"
-                        ? "bg-white text-[var(--color-primary)] font-medium"
-                        : "text-white/90 hover:bg-white/20 hover:text-white"
+                        ? "bg-white text-[var(--color-primary)] font-medium shadow-sm"
+                        : "text-white/90 hover:bg-white/20 hover:text-white hover:scale-105"
                     }`}
                   >
                     <FileText size={18} />
@@ -92,10 +122,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 )}
                 <Link
                   href="/aide"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] transition-all duration-[var(--transition-base)] ${
                     pathname === "/aide"
-                      ? "bg-white text-[var(--color-primary)] font-medium"
-                      : "text-white/90 hover:bg-white/20 hover:text-white"
+                      ? "bg-white text-[var(--color-primary)] font-medium shadow-sm"
+                      : "text-white/90 hover:bg-white/20 hover:text-white hover:scale-105"
                   }`}
                 >
                   <HelpCircle size={18} />
@@ -117,7 +147,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </header>
 
-      <main className="max-w-screen-xl mx-auto px-6 py-[var(--spacing-lg)]">
+      <main className="max-w-screen-xl mx-auto px-6 py-[var(--spacing-lg)] animate-fade-in-up">
+        {pathname && pathname !== "/dashboard" && pathname !== "/dashboard/imrep" && pathname !== "/dashboard/allianz" && (
+          <Breadcrumb
+            items={getBreadcrumbItems(pathname)}
+          />
+        )}
         {children}
       </main>
     </div>

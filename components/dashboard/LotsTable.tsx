@@ -148,12 +148,12 @@ export default function LotsTable({
 
   const SortableHeader = ({ label, column, className = "" }: { label: string; column: SortableColumn; className?: string }) => (
     <th
-      className={`px-6 py-4 text-left uppercase text-xs tracking-wide text-neutral-500 font-semibold cursor-pointer hover:bg-neutral-100 transition-colors ${className}`}
+      className={`px-6 py-4 text-left uppercase text-xs tracking-wide text-neutral-500 font-semibold cursor-pointer hover:bg-neutral-100 transition-all duration-[var(--transition-base)] hover:scale-[1.02] ${className}`}
       onClick={() => handleSort(column)}
     >
       <div className="flex items-center gap-2">
-        <span>{label}</span>
-        {getSortIcon(column)}
+        <span className="transition-colors duration-[var(--transition-base)]">{label}</span>
+        <span className="transition-transform duration-[var(--transition-base)]">{getSortIcon(column)}</span>
       </div>
     </th>
   );
@@ -181,8 +181,8 @@ export default function LotsTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
-        {sortedLots.map((lot) => (
-          <TableRow key={lot.id}>
+        {sortedLots.map((lot, index) => (
+          <TableRow key={lot.id} className="animate-fade-in" style={{ animationDelay: `${index * 20}ms` }}>
             <TableCell className="font-medium">{lot.codeProprietaire}</TableCell>
             <TableCell className="font-medium">{lot.codeLot}</TableCell>
             <TableCell>
