@@ -58,3 +58,44 @@ export async function deleteUserWithAdmin(uid: string, userEmail: string): Promi
     throw error;
   }
 }
+
+/**
+ * Modifie le mot de passe d'un utilisateur dans Firebase Auth
+ * Nécessite FIREBASE_SERVICE_ACCOUNT_KEY dans les variables d'environnement
+ * @param uid - L'UID de l'utilisateur
+ * @param newPassword - Le nouveau mot de passe (minimum 6 caractères)
+ * @param userEmail - L'email de l'utilisateur (pour vérification)
+ */
+export async function updateUserPassword(
+  uid: string,
+  newPassword: string,
+  userEmail: string
+): Promise<void> {
+  try {
+    // Vérifier que FIREBASE_SERVICE_ACCOUNT_KEY est configuré
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+      throw new Error(
+        "FIREBASE_SERVICE_ACCOUNT_KEY n'est pas configuré. Impossible de modifier le mot de passe."
+      );
+    }
+
+    // Vérifier la longueur du mot de passe
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error("Le mot de passe doit contenir au moins 6 caractères");
+    }
+
+    const adminAuth = getAdminAuth();
+
+    // Modifier le mot de passe dans Firebase Auth
+    await adminAuth.updateUser(uid, {
+      password: newPassword,
+    });
+
+    console.log(`[Admin] Mot de passe modifié pour l'utilisateur ${userEmail} (${uid})`);
+  } catch (error: any) {
+    console.error("[Admin] Erreur lors de la modification du mot de passe:", error);
+    throw new Error(
+      error.message || "Erreur lors de la modification du mot de passe"
+    );
+  }
+}

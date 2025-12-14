@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { SectionTitle, Button, Table, TableRow, TableCell, Badge, Select, ConfirmModal } from "@/components/ui";
+import Input from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getAllUsers, updateUserRole, toggleUserStatus, deleteUser } from "@/lib/firebase/users";
+import { updateUserPassword } from "@/lib/firebase/admin-actions";
 import { User, UserRole } from "@/lib/lots/types";
 import { useToast } from "@/components/ui";
-import { Plus, Edit, Trash2, Power } from "lucide-react";
+import { Plus, Edit, Trash2, Power, Key } from "lucide-react";
 
 export default function UtilisateursPage() {
   const { user, loading: authLoading } = useAuth();
@@ -20,6 +22,9 @@ export default function UtilisateursPage() {
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<{ user: User; action: string } | null>(null);
   const [newRole, setNewRole] = useState<UserRole>("imrep");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
     if (authLoading || roleLoading) return;
@@ -87,6 +92,34 @@ export default function UtilisateursPage() {
     }
   };
 
+  const handleUpdatePassword = async () => {
+    if (!selectedUser) return;
+
+    // Validation
+    setPasswordError("");
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordError("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Les mots de passe ne correspondent pas");
+      return;
+    }
+
+    try {
+      await updateUserPassword(selectedUser.user.id, newPassword, selectedUser.user.email);
+      showToast("Mot de passe modifié avec succès", "success");
+      setSelectedUser(null);
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordError("");
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors de la modification du mot de passe", "error");
+      setPasswordError(error.message || "Erreur lors de la modification");
+    }
+  };
+
   if (authLoading || roleLoading || loading) {
     return (
       <DashboardLayout>
@@ -136,13 +169,28 @@ export default function UtilisateursPage() {
                           setSelectedUser({ user: u, action: "role" });
                           setNewRole(u.role);
                         }}
+                        title="Modifier le rôle"
                       >
                         <Edit size={16} />
                       </Button>
                       <Button
                         variant="secondary"
                         className="p-2"
+                        onClick={() => {
+                          setSelectedUser({ user: u, action: "password" });
+                          setNewPassword("");
+                          setConfirmPassword("");
+                          setPasswordError("");
+                        }}
+                        title="Modifier le mot de passe"
+                      >
+                        <Key size={16} />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="p-2"
                         onClick={() => handleToggleStatus(u.id, u.isActive)}
+                        title={u.isActive ? "Désactiver" : "Activer"}
                       >
                         <Power size={16} />
                       </Button>
@@ -150,13 +198,29 @@ export default function UtilisateursPage() {
                         variant="danger"
                         className="p-2"
                         onClick={() => setSelectedUser({ user: u, action: "delete" })}
+                        title="Supprimer"
                       >
                         <Trash2 size={16} />
                       </Button>
                     </>
                   )}
                   {isProtected && (
-                    <span className="text-sm text-[var(--color-neutral-500)]">Protégé</span>
+                    <>
+                      <Button
+                        variant="secondary"
+                        className="p-2"
+                        onClick={() => {
+                          setSelectedUser({ user: u, action: "password" });
+                          setNewPassword("");
+                          setConfirmPassword("");
+                          setPasswordError("");
+                        }}
+                        title="Modifier le mot de passe"
+                      >
+                        <Key size={16} />
+                      </Button>
+                      <span className="text-sm text-[var(--color-neutral-500)]">Protégé</span>
+                    </>
                   )}
                 </div>
               </TableCell>
@@ -185,6 +249,54 @@ export default function UtilisateursPage() {
                 Annuler
               </Button>
               <Button variant="primary" onClick={handleUpdateRole}>
+                Confirmer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedUser?.action === "password" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-[var(--radius-md)] p-[var(--spacing-md)] max-w-md w-full mx-4 shadow-[var(--shadow-hover)]">
+            <h3 className="text-[20px] font-semibold text-[var(--color-dark)] mb-4">
+              Modifier le mot de passe
+            </h3>
+            <p className="text-sm text-[var(--color-neutral-600)] mb-4">
+              Utilisateur : <strong>{selectedUser.user.email}</strong>
+            </p>
+            <Input
+              type="password"
+              label="Nouveau mot de passe"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                setPasswordError("");
+              }}
+              className="mb-4"
+              helpText="Minimum 6 caractères"
+            />
+            <Input
+              type="password"
+              label="Confirmer le mot de passe"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setPasswordError("");
+              }}
+              className="mb-4"
+              error={passwordError}
+            />
+            <div className="flex gap-3 justify-end">
+              <Button variant="secondary" onClick={() => {
+                setSelectedUser(null);
+                setNewPassword("");
+                setConfirmPassword("");
+                setPasswordError("");
+              }}>
+                Annuler
+              </Button>
+              <Button variant="primary" onClick={handleUpdatePassword}>
                 Confirmer
               </Button>
             </div>
