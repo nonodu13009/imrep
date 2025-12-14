@@ -14,6 +14,7 @@ import SuppressionModal from "./SuppressionModal";
 interface LotsTableProps {
   lots: Lot[];
   role: "imrep" | "allianz";
+  currentUserId?: string; // Pour vérifier si l'utilisateur est le créateur du lot
   onValidateEntree?: (lotId: string, numeroContrat: string) => void;
   onRefuseEntree?: (lotId: string, motif: string) => void;
   onValidateSortie?: (lotId: string) => void;
@@ -27,6 +28,7 @@ interface LotsTableProps {
 export default function LotsTable({
   lots,
   role,
+  currentUserId,
   onValidateEntree,
   onRefuseEntree,
   onValidateSortie,
@@ -230,7 +232,7 @@ export default function LotsTable({
 
                 {role === "imrep" && (
                   <>
-                    {lot.statut === "en_attente" && !lot.suppression && (
+                    {lot.statut === "en_attente" && !lot.suppression && lot.createdBy === currentUserId && (
                       <>
                         <Link href={`/lots/${lot.id}/edit`}>
                           <Button variant="secondary" className="p-2">
@@ -253,7 +255,7 @@ export default function LotsTable({
                         )}
                       </>
                     )}
-                    {lot.statut === "valide" && !lot.sortie && (
+                    {lot.statut === "valide" && !lot.sortie && lot.createdBy === currentUserId && (
                       <Tooltip
                         content="Arrêter la gestion d'un lot déjà assuré. Le lot reste dans le système mais la gestion s'arrête après validation par Allianz."
                         position="top"

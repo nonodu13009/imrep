@@ -14,11 +14,11 @@ Le système garantit un suivi fiable, traçable, sécurisé, avec rôles distinc
 Peut :
 
 * créer un lot (demande d'entrée)
-* modifier un lot **tant que le statut = "en_attente"**
-* demander la sortie d'un lot **si statut = "valide"**
-* consulter uniquement ses propres lots
+* modifier un lot **tant que le statut = "en_attente"** et qu'il en est le créateur
+* demander la sortie d'un lot **si statut = "valide"** et qu'il en est le créateur
+* consulter **tous les lots** (lots de tous les IMREP)
 * consulter l'historique d'un lot
-* modifier ou supprimer une demande **tant qu'elle n'est pas validée par Allianz**
+* modifier ou supprimer une demande **tant qu'elle n'est pas validée par Allianz** et qu'il en est le créateur
 * authentification via email + password
 
 Ne peut pas :
@@ -26,7 +26,7 @@ Ne peut pas :
 * valider ou refuser des demandes
 * modifier un lot validé
 * modifier une sortie validée
-* accéder aux données d'autres IMREP
+* modifier ou supprimer les lots créés par d'autres IMREP
 
 ## 🔹 **Rôle Allianz** (ADMIN)
 
@@ -230,15 +230,16 @@ Contraintes :
 
 # 8. **Règles de sécurité**
 
-* un IMREP ne peut voir QUE ses lots
+* **Tous les utilisateurs (IMREP et Allianz) peuvent voir TOUS les lots**
+* un IMREP ne peut modifier/supprimer QUE ses propres lots (vérifié via `createdBy`)
 * un Allianz peut voir TOUS les lots
 * un utilisateur ne peut pas modifier son propre rôle
 * root admin immunisé contre modifications et suppressions
-* aucune suppression de lot autorisée
+* aucune suppression de lot autorisée (seulement demande de suppression)
 * toutes les actions sensibles exigent :
 
   * vérification du rôle
-  * vérification du propriétaire (IMREP)
+  * vérification du créateur (IMREP) pour les actions de modification/suppression
   * respect du statut
 
 ---

@@ -44,13 +44,6 @@ export default function LotDetailPage() {
           return;
         }
 
-        // Vérifier les permissions
-        if (role === "imrep" && lotData.createdBy !== user.uid) {
-          showToast("Vous n'avez pas accès à ce lot", "error");
-          router.push("/dashboard");
-          return;
-        }
-
         setLot(lotData);
       } catch (error) {
         console.error("Erreur lors de la récupération du lot:", error);

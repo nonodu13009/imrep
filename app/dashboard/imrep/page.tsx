@@ -8,7 +8,7 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { SectionTitle, Button } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
-import { getLotsByImrep } from "@/lib/lots/queries";
+import { getAllLots } from "@/lib/lots/queries";
 import { requestSortie, requestSuppression } from "@/lib/lots/actions";
 import { Lot, LotStatus } from "@/lib/lots/types";
 import StatsCards from "@/components/dashboard/StatsCards";
@@ -45,9 +45,9 @@ export default function DashboardImrepPage() {
     const fetchLots = async () => {
       try {
         setLoading(true);
-        const userLots = await getLotsByImrep(user.uid);
-        setLots(userLots);
-        setFilteredLots(userLots);
+        const allLots = await getAllLots();
+        setLots(allLots);
+        setFilteredLots(allLots);
       } catch (error) {
         console.error("Erreur lors de la récupération des lots:", error);
         showToast("Erreur lors du chargement des lots", "error");
@@ -96,7 +96,7 @@ export default function DashboardImrepPage() {
     try {
       await requestSortie(lotId, sortieData, user.uid);
       showToast("Demande de sortie créée avec succès", "success");
-      const updatedLots = await getLotsByImrep(user.uid);
+      const updatedLots = await getAllLots();
       setLots(updatedLots);
     } catch (error: any) {
       showToast(error.message || "Erreur lors de la demande de sortie", "error");
@@ -111,7 +111,7 @@ export default function DashboardImrepPage() {
     try {
       await requestSuppression(lotId, suppressionData, user.uid);
       showToast("Demande de suppression créée avec succès", "success");
-      const updatedLots = await getLotsByImrep(user.uid);
+      const updatedLots = await getAllLots();
       setLots(updatedLots);
     } catch (error: any) {
       showToast(error.message || "Erreur lors de la demande de suppression", "error");
@@ -139,7 +139,7 @@ export default function DashboardImrepPage() {
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between mb-[24px]">
-        <SectionTitle>Mes lots</SectionTitle>
+        <SectionTitle>Gestion des lots</SectionTitle>
         <Link href="/lots/nouveau">
           <Button variant="primary">
             <Plus size={18} className="mr-2" />
@@ -170,7 +170,7 @@ export default function DashboardImrepPage() {
           </p>
         </div>
       ) : (
-        <LotsTable lots={filteredLots} role="imrep" onRequestSortie={handleRequestSortie} onRequestSuppression={handleRequestSuppression} />
+        <LotsTable lots={filteredLots} role="imrep" currentUserId={user?.uid} onRequestSortie={handleRequestSortie} onRequestSuppression={handleRequestSuppression} />
       )}
     </DashboardLayout>
   );

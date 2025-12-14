@@ -215,9 +215,12 @@ export default function AidePage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-[var(--color-dark)] mb-2">Vue personnalisée</h3>
+                <h3 className="font-semibold text-[var(--color-dark)] mb-2">Vue globale</h3>
                 <p>
-                  Vous ne voyez que vos propres lots. Utilisez les filtres pour affiner votre recherche par statut.
+                  Vous pouvez voir tous les lots de tous les IMREP. Utilisez les filtres pour affiner votre recherche par statut, propriétaire, type ou code postal.
+                </p>
+                <p className="mt-2 text-sm text-[var(--color-neutral-600)]">
+                  <strong>Note importante :</strong> Vous ne pouvez modifier ou supprimer que les lots que vous avez créés vous-même.
                 </p>
               </div>
             </div>
