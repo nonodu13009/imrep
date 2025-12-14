@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import { logoutUser } from "@/lib/firebase/auth";
-import { Button, Breadcrumb } from "@/components/ui";
+import { Breadcrumb } from "@/components/ui";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     try {
-    await logoutUser();
+      await logoutUser();
       router.push("/login");
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
