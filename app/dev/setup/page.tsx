@@ -154,6 +154,12 @@ export default function DevSetupPage() {
             Générer 20 lots mockés →
           </a>
           <a
+            href="/dev/delete-mock-lots"
+            className="block w-full text-center px-4 py-2 bg-red-600 text-white rounded-[var(--radius-md)] hover:bg-red-700 transition-colors text-sm font-medium"
+          >
+            Supprimer les lots mockés →
+          </a>
+          <a
             href="/dev/update-proprietaires"
             className="block w-full text-center px-4 py-2 bg-[var(--color-secondary)] text-white rounded-[var(--radius-md)] hover:opacity-90 transition-colors text-sm font-medium"
           >
