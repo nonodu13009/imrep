@@ -341,8 +341,10 @@ export default function JournalPage() {
 
                     {log.type === "demande_sortie" && (
                       <div className="mt-2 space-y-1 text-xs text-[var(--color-neutral-600)]">
-                        {log.data.motif && <p><strong>Motif :</strong> {String(log.data.motif)}</p>}
-                        {log.data.dateSortieDemandee && (
+                        {log.data.motif != null && (
+                          <p><strong>Motif :</strong> {String(log.data.motif)}</p>
+                        )}
+                        {log.data.dateSortieDemandee != null && (
                           <p>
                             <strong>Date de sortie demandée :</strong>{" "}
                             {formatDate(
@@ -359,7 +361,7 @@ export default function JournalPage() {
 
                     {log.type === "demande_suppression" && (
                       <div className="mt-2 space-y-1 text-xs text-[var(--color-neutral-600)]">
-                        {log.data.motif && (
+                        {log.data.motif != null && (
                           <p>
                             <strong>Motif :</strong>{" "}
                             {String(log.data.motif) === "perte_gestion"
@@ -367,11 +369,11 @@ export default function JournalPage() {
                               : String(log.data.motif) === "vente"
                               ? "Vente"
                               : String(log.data.motif) === "autre"
-                              ? `Autre : ${log.data.motifAutre || ""}`
+                              ? `Autre : ${String(log.data.motifAutre || "")}`
                               : String(log.data.motif)}
                           </p>
                         )}
-                        {log.data.dateSuppressionDemandee && (
+                        {log.data.dateSuppressionDemandee != null && (
                           <p>
                             <strong>Date de suppression demandée :</strong>{" "}
                             {formatDate(
@@ -388,12 +390,12 @@ export default function JournalPage() {
 
                     {(log.type === "validation_entree" || log.type === "validation_sortie" || log.type === "validation_suppression") && (
                       <div className="mt-2 space-y-1 text-xs text-[var(--color-neutral-600)]">
-                        {log.data.numeroContrat && (
+                        {log.data.numeroContrat != null && (
                           <p>
                             <strong>Numéro de contrat :</strong> {String(log.data.numeroContrat)}
                           </p>
                         )}
-                        {log.data.commentaire && (
+                        {log.data.commentaire != null && (
                           <p>
                             <strong>Commentaire :</strong> {String(log.data.commentaire)}
                           </p>
@@ -403,7 +405,7 @@ export default function JournalPage() {
 
                     {(log.type === "refus_entree" || log.type === "refus_sortie" || log.type === "refus_suppression") && (
                       <div className="mt-2 space-y-1 text-xs text-[var(--color-neutral-600)]">
-                        {log.data.motifRefus && (
+                        {log.data.motifRefus != null && (
                           <p>
                             <strong>Motif du refus :</strong> {String(log.data.motifRefus)}
                           </p>
