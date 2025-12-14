@@ -223,49 +223,53 @@ export default function LotsTable({
             <TableCell>{getStatusBadge(lot.statut)}</TableCell>
             <TableCell>{formatDate(lot.dateEffetDemandee)}</TableCell>
             <TableCell>
-              <div className="flex items-center gap-2">
-                <Link href={`/lots/${lot.id}`}>
-                  <Button variant="secondary" className="p-2">
-                    <Eye size={16} />
-                  </Button>
-                </Link>
+              <div className="flex items-center gap-1.5">
+                <Tooltip content="Voir les détails du lot" position="top">
+                  <Link href={`/lots/${lot.id}`}>
+                    <Button variant="secondary" className="p-1.5 min-w-[32px] h-[32px]">
+                      <Eye size={14} />
+                    </Button>
+                  </Link>
+                </Tooltip>
 
                 {role === "imrep" && (
                   <>
-                    {lot.statut === "en_attente" && !lot.suppression && lot.createdBy === currentUserId && (
+                    {lot.statut === "en_attente" && !lot.suppression && (
                       <>
-                        <Link href={`/lots/${lot.id}/edit`}>
-                          <Button variant="secondary" className="p-2">
-                            <Edit size={16} />
-                          </Button>
-                        </Link>
+                        <Tooltip content="Modifier le lot" position="top">
+                          <Link href={`/lots/${lot.id}/edit`}>
+                            <Button variant="secondary" className="p-1.5 min-w-[32px] h-[32px]">
+                              <Edit size={14} />
+                            </Button>
+                          </Link>
+                        </Tooltip>
                         {onRequestSuppression && (
                           <Tooltip
-                            content="Annuler une demande non validée. Motifs : perte de la gestion, vente ou autre."
+                            content="Demander la suppression du lot. Motifs : perte de la gestion, vente ou autre."
                             position="top"
                           >
                             <Button
                               variant="danger"
-                              className="p-2"
+                              className="p-1.5 min-w-[32px] h-[32px]"
                               onClick={() => setSuppressionModal({ isOpen: true, lotId: lot.id! })}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={14} />
                             </Button>
                           </Tooltip>
                         )}
                       </>
                     )}
-                    {lot.statut === "valide" && !lot.sortie && lot.createdBy === currentUserId && (
+                    {lot.statut === "valide" && !lot.sortie && (
                       <Tooltip
-                        content="Arrêter la gestion d'un lot déjà assuré. Le lot reste dans le système mais la gestion s'arrête après validation par Allianz."
+                        content="Demander l'arrêt de la gestion du lot. Le lot reste dans le système mais la gestion s'arrêtera après validation par Allianz."
                         position="top"
                       >
                         <Button
                           variant="secondary"
-                          className="p-2"
+                          className="p-1.5 min-w-[32px] h-[32px]"
                           onClick={() => setSortieModal({ isOpen: true, lotId: lot.id! })}
                         >
-                          <SortieIcon size={16} />
+                          <SortieIcon size={14} />
                         </Button>
                       </Tooltip>
                     )}
@@ -279,21 +283,19 @@ export default function LotsTable({
                         <Tooltip content="Valider l'entrée du lot dans le système. Le lot passera au statut 'Validé' et sera considéré comme assuré." position="top">
                           <Button
                             variant="primary"
-                            className="p-2 flex items-center gap-1.5"
+                            className="p-1.5 min-w-[32px] h-[32px]"
                             onClick={() => setValidationModal({ isOpen: true, lotId: lot.id!, type: "entree" })}
                           >
-                            <FileCheck size={16} />
-                            <span className="text-xs hidden sm:inline">Valider entrée</span>
+                            <FileCheck size={14} />
                           </Button>
                         </Tooltip>
                         <Tooltip content="Refuser l'entrée du lot. Le lot passera au statut 'Refusé'." position="top">
                           <Button
                             variant="danger"
-                            className="p-2 flex items-center gap-1.5"
+                            className="p-1.5 min-w-[32px] h-[32px]"
                             onClick={() => setRefusModal({ isOpen: true, lotId: lot.id!, type: "entree" })}
                           >
-                            <FileX size={16} />
-                            <span className="text-xs hidden sm:inline">Refuser entrée</span>
+                            <FileX size={14} />
                           </Button>
                         </Tooltip>
                       </>
@@ -303,21 +305,19 @@ export default function LotsTable({
                         <Tooltip content="Valider la sortie du lot. La gestion s'arrêtera à la date demandée. Le lot restera dans le système mais ne sera plus géré." position="top">
                           <Button
                             variant="primary"
-                            className="p-2 flex items-center gap-1.5"
+                            className="p-1.5 min-w-[32px] h-[32px]"
                             onClick={() => setValidationModal({ isOpen: true, lotId: lot.id!, type: "sortie" })}
                           >
-                            <SortieIcon size={16} />
-                            <span className="text-xs hidden sm:inline">Valider sortie</span>
+                            <SortieIcon size={14} />
                           </Button>
                         </Tooltip>
                         <Tooltip content="Refuser la demande de sortie. Le lot restera dans le système avec son statut actuel." position="top">
                           <Button
                             variant="danger"
-                            className="p-2 flex items-center gap-1.5"
+                            className="p-1.5 min-w-[32px] h-[32px]"
                             onClick={() => setRefusModal({ isOpen: true, lotId: lot.id!, type: "sortie" })}
                           >
-                            <Ban size={16} />
-                            <span className="text-xs hidden sm:inline">Refuser sortie</span>
+                            <Ban size={14} />
                           </Button>
                         </Tooltip>
                       </>
@@ -327,21 +327,19 @@ export default function LotsTable({
                         <Tooltip content="Valider la suppression du lot. Le lot sera définitivement retiré du système." position="top">
                           <Button
                             variant="danger"
-                            className="p-2 flex items-center gap-1.5"
+                            className="p-1.5 min-w-[32px] h-[32px]"
                             onClick={() => setValidationModal({ isOpen: true, lotId: lot.id!, type: "suppression" })}
                           >
-                            <Trash2 size={16} />
-                            <span className="text-xs hidden sm:inline">Valider suppression</span>
+                            <Trash2 size={14} />
                           </Button>
                         </Tooltip>
                         <Tooltip content="Refuser la demande de suppression. Le lot restera dans le système avec son statut actuel." position="top">
                           <Button
                             variant="secondary"
-                            className="p-2 flex items-center gap-1.5"
+                            className="p-1.5 min-w-[32px] h-[32px]"
                             onClick={() => setRefusModal({ isOpen: true, lotId: lot.id!, type: "suppression" })}
                           >
-                            <X size={16} />
-                            <span className="text-xs hidden sm:inline">Refuser suppression</span>
+                            <X size={14} />
                           </Button>
                         </Tooltip>
                       </>

@@ -74,11 +74,8 @@ export default function EditLotPage() {
           return;
         }
 
-        if (lotData.createdBy !== user.uid) {
-          showToast("Vous ne pouvez modifier que vos propres lots", "error");
-          router.push("/dashboard");
-          return;
-        }
+        // Tous les utilisateurs IMREP peuvent modifier tous les lots en attente
+        // L'action sera tracée dans l'historique avec le userId
 
         setLot(lotData);
         // Remplir le formulaire

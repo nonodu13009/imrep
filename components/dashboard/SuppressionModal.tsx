@@ -97,10 +97,10 @@ export default function SuppressionModal({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={onClose}>
       <div
-        className="bg-white rounded-[var(--radius-md)] p-6 max-w-lg w-full my-auto shadow-[var(--shadow-hover)] max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-[var(--radius-md)] max-w-lg w-full shadow-[var(--shadow-hover)] max-h-[calc(100vh-2rem)] flex flex-col my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-[var(--color-neutral-200)] flex-shrink-0">
           <h3 className="text-xl font-semibold text-[var(--color-dark)]">Demander la suppression</h3>
           <button
             onClick={onClose}
@@ -111,7 +111,8 @@ export default function SuppressionModal({
           </button>
         </div>
 
-        <div className="space-y-5">
+        <div className="p-6 overflow-y-auto flex-1">
+          <div className="space-y-5">
           <div className="w-full">
             <Select
               label="Motif de suppression *"
@@ -187,8 +188,9 @@ export default function SuppressionModal({
             />
           </div>
         </div>
+        </div>
 
-        <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-[var(--color-neutral-200)]">
+        <div className="flex gap-3 justify-end p-6 pt-4 border-t border-[var(--color-neutral-200)] flex-shrink-0">
           <Button variant="secondary" onClick={onClose} disabled={isLoading}>
             Annuler
           </Button>

@@ -1,7 +1,7 @@
 import { collection, doc, setDoc, updateDoc, arrayUnion, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { getUserRole } from "@/lib/firebase/users";
-import { getLotById } from "./queries";
+import { getLotById, isNumeroContratAlreadyUsed } from "./queries";
 import { Lot, LotStatus, Sortie, Suppression, HistoryEntry, HistoryType } from "./types";
 
 // Helper function to remove undefined values from an object recursively
@@ -83,9 +83,8 @@ export async function updateLot(lotId: string, updates: Partial<Lot>, userId: st
       throw new Error("Seuls les lots en attente peuvent être modifiés");
     }
 
-    if (lot.createdBy !== userId) {
-      throw new Error("Vous ne pouvez modifier que vos propres lots");
-    }
+    // Tous les utilisateurs IMREP peuvent modifier tous les lots en attente
+    // L'action sera tracée dans l'historique avec le userId
 
     const forbiddenFields = ["numeroContrat", "validatedBy", "statut", "sortie", "history", "createdBy"];
     for (const field of forbiddenFields) {
@@ -146,9 +145,8 @@ export async function requestSortie(lotId: string, sortieData: Omit<Sortie, "sta
       throw new Error("Seuls les lots validés peuvent faire l'objet d'une demande de sortie");
     }
 
-    if (lot.createdBy !== userId) {
-      throw new Error("Vous ne pouvez demander la sortie que de vos propres lots");
-    }
+    // Tous les utilisateurs IMREP peuvent demander la sortie de tous les lots validés
+    // L'action sera tracée dans l'historique avec le userId
 
     if (lot.sortie && (lot.sortie.statutSortie === "en_attente_allianz" || lot.sortie.statutSortie === "sortie_validee")) {
       throw new Error("Une sortie est déjà en cours ou validée");
@@ -213,6 +211,12 @@ export async function validateEntree(lotId: string, numeroContrat: string, valid
 
     if (!numeroContrat || numeroContrat.trim() === "") {
       throw new Error("Le numéro de contrat est obligatoire");
+    }
+
+    // Vérifier que le numéro de contrat n'est pas déjà utilisé par un autre lot validé
+    const isAlreadyUsed = await isNumeroContratAlreadyUsed(numeroContrat, lotId);
+    if (isAlreadyUsed) {
+      throw new Error("Ce numéro de contrat est déjà utilisé par un autre lot validé");
     }
 
     const historyEntry: HistoryEntry = {
@@ -369,9 +373,8 @@ export async function requestSuppression(
       throw new Error("Seuls les lots en attente peuvent faire l'objet d'une demande de suppression");
     }
 
-    if (lot.createdBy !== userId) {
-      throw new Error("Vous ne pouvez demander la suppression que de vos propres lots");
-    }
+    // Tous les utilisateurs IMREP peuvent demander la suppression de tous les lots en attente
+    // L'action sera tracée dans l'historique avec le userId
 
     if (lot.suppression && (lot.suppression.statutSuppression === "en_attente_allianz" || lot.suppression.statutSuppression === "suppression_validee")) {
       throw new Error("Une demande de suppression est déjà en cours ou validée");

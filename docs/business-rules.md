@@ -14,11 +14,11 @@ Le système garantit un suivi fiable, traçable, sécurisé, avec rôles distinc
 Peut :
 
 * créer un lot (demande d'entrée)
-* modifier un lot **tant que le statut = "en_attente"** et qu'il en est le créateur
-* demander la sortie d'un lot **si statut = "valide"** et qu'il en est le créateur
+* modifier un lot **tant que le statut = "en_attente"** (tous les utilisateurs IMREP peuvent modifier tous les lots en attente)
+* demander la sortie d'un lot **si statut = "valide"** (tous les utilisateurs IMREP peuvent demander la sortie de tous les lots validés)
 * consulter **tous les lots** (lots de tous les IMREP)
 * consulter l'historique d'un lot
-* modifier ou supprimer une demande **tant qu'elle n'est pas validée par Allianz** et qu'il en est le créateur
+* modifier ou supprimer une demande **tant qu'elle n'est pas validée par Allianz** (tous les utilisateurs IMREP peuvent modifier/supprimer toutes les demandes en attente)
 * authentification via email + password
 
 Ne peut pas :
@@ -26,7 +26,6 @@ Ne peut pas :
 * valider ou refuser des demandes
 * modifier un lot validé
 * modifier une sortie validée
-* modifier ou supprimer les lots créés par d'autres IMREP
 
 ## 🔹 **Rôle Allianz** (ADMIN)
 
@@ -150,7 +149,7 @@ Champ `sortie` contient :
 ### ✔ **IMREP peut modifier un lot si :**
 
 * statut = "en_attente"
-* il est le créateur (createdBy == uid)
+* **Tous les utilisateurs IMREP peuvent modifier tous les lots en attente** (l'action est tracée dans l'historique avec le userId)
 * il ne modifie PAS :
 
   * numeroContrat
@@ -170,7 +169,6 @@ Champ `sortie` contient :
 * valider/refuser une demande
 * modifier un lot validé
 * modifier une sortie validée
-* modifier les données d'un autre IMREP
 
 ---
 
@@ -231,7 +229,7 @@ Contraintes :
 # 8. **Règles de sécurité**
 
 * **Tous les utilisateurs (IMREP et Allianz) peuvent voir TOUS les lots**
-* un IMREP ne peut modifier/supprimer QUE ses propres lots (vérifié via `createdBy`)
+* **Tous les utilisateurs IMREP peuvent modifier/supprimer TOUS les lots en attente** (l'action est tracée dans l'historique avec le userId)
 * un Allianz peut voir TOUS les lots
 * un utilisateur ne peut pas modifier son propre rôle
 * root admin immunisé contre modifications et suppressions

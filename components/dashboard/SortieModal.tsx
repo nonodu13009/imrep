@@ -86,10 +86,10 @@ export default function SortieModal({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={onClose}>
       <div
-        className="bg-white rounded-[var(--radius-md)] p-[var(--spacing-md)] max-w-md w-full my-auto shadow-[var(--shadow-hover)] max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-[var(--radius-md)] max-w-md w-full shadow-[var(--shadow-hover)] max-h-[calc(100vh-2rem)] flex flex-col my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-[var(--color-neutral-200)] flex-shrink-0">
           <h3 className="text-[20px] font-semibold text-[var(--color-dark)]">Demander une sortie</h3>
           <button
             onClick={onClose}
@@ -100,52 +100,54 @@ export default function SortieModal({
           </button>
         </div>
 
-        <div className="space-y-[var(--spacing-sm)]">
-          <Input
-            label="Motif de sortie *"
-            value={motif}
-            onChange={(e) => setMotif(e.target.value)}
-            placeholder="Indiquez le motif de la sortie"
-            error={errors.motif}
-            required
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--spacing-sm)]">
+        <div className="p-6 overflow-y-auto flex-1">
+          <div className="space-y-[var(--spacing-sm)]">
             <Input
-              type="date"
-              label="Date de sortie demandée *"
-              value={dateSortieDemandee}
-              onChange={(e) => setDateSortieDemandee(e.target.value)}
-              error={errors.dateSortieDemandee}
+              label="Motif de sortie *"
+              value={motif}
+              onChange={(e) => setMotif(e.target.value)}
+              placeholder="Indiquez le motif de la sortie"
+              error={errors.motif}
               required
-              min={new Date().toISOString().split("T")[0]}
             />
 
-            <Input
-              type="date"
-              label="Date de déclaration *"
-              value={dateSortieDeclaration}
-              onChange={(e) => setDateSortieDeclaration(e.target.value)}
-              error={errors.dateSortieDeclaration}
-              required
-              max={new Date().toISOString().split("T")[0]}
-            />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--spacing-sm)]">
+              <Input
+                type="date"
+                label="Date de sortie demandée *"
+                value={dateSortieDemandee}
+                onChange={(e) => setDateSortieDemandee(e.target.value)}
+                error={errors.dateSortieDemandee}
+                required
+                min={new Date().toISOString().split("T")[0]}
+              />
 
-          <div>
-            <label className="block text-[14px] font-medium text-[var(--color-dark)] mb-2">
-              Note de sortie (optionnel)
-            </label>
-            <textarea
-              value={noteSortie}
-              onChange={(e) => setNoteSortie(e.target.value)}
-              placeholder="Ajoutez une note si nécessaire..."
-              className="w-full border border-[var(--color-neutral-200)] rounded-[var(--radius-md)] px-3 py-2 focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none min-h-[80px]"
-            />
+              <Input
+                type="date"
+                label="Date de déclaration *"
+                value={dateSortieDeclaration}
+                onChange={(e) => setDateSortieDeclaration(e.target.value)}
+                error={errors.dateSortieDeclaration}
+                required
+                max={new Date().toISOString().split("T")[0]}
+              />
+            </div>
+
+            <div>
+              <label className="block text-[14px] font-medium text-[var(--color-dark)] mb-2">
+                Note de sortie (optionnel)
+              </label>
+              <textarea
+                value={noteSortie}
+                onChange={(e) => setNoteSortie(e.target.value)}
+                placeholder="Ajoutez une note si nécessaire..."
+                className="w-full border border-[var(--color-neutral-200)] rounded-[var(--radius-md)] px-3 py-2 focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none min-h-[80px] resize-none"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-3 justify-end mt-[var(--spacing-md)]">
+        <div className="flex gap-3 justify-end p-6 pt-4 border-t border-[var(--color-neutral-200)] flex-shrink-0">
           <Button variant="secondary" onClick={onClose} disabled={isLoading}>
             Annuler
           </Button>

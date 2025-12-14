@@ -127,3 +127,31 @@ export async function getLotById(lotId: string): Promise<Lot | null> {
   }
 }
 
+/**
+ * Vérifie si un numéro de contrat est déjà utilisé par un autre lot validé
+ * @param numeroContrat Le numéro de contrat à vérifier
+ * @param excludeLotId L'ID du lot à exclure de la vérification (le lot en cours de validation)
+ * @returns true si le numéro de contrat est déjà utilisé, false sinon
+ */
+export async function isNumeroContratAlreadyUsed(numeroContrat: string, excludeLotId?: string): Promise<boolean> {
+  try {
+    const q = query(
+      collection(db, "lots"),
+      where("numeroContrat", "==", numeroContrat.trim()),
+      where("statut", "==", "valide")
+    );
+    const snapshot = await getDocs(q);
+    
+    // Si un excludeLotId est fourni, filtrer les résultats pour exclure ce lot
+    if (excludeLotId) {
+      const lotsWithSameContract = snapshot.docs.filter((doc) => doc.id !== excludeLotId);
+      return lotsWithSameContract.length > 0;
+    }
+    
+    return !snapshot.empty;
+  } catch (error) {
+    console.error("Erreur lors de la vérification du numéro de contrat:", error);
+    throw error;
+  }
+}
+
