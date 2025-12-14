@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface PieChartData {
   label: string;
   value: number;
@@ -12,6 +14,8 @@ interface PieChartProps {
 }
 
 export default function PieChart({ data, size = 120 }: PieChartProps) {
+  const [hoveredSector, setHoveredSector] = useState<number | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
   // Filtrer les données avec valeur > 0
   const filteredData = data.filter((item) => item.value > 0);
 
@@ -73,8 +77,44 @@ export default function PieChart({ data, size = 120 }: PieChartProps) {
     };
   });
 
+  const handleMouseEnter = (index: number, event: React.MouseEvent<SVGPathElement>) => {
+    setHoveredSector(index);
+    updateTooltipPosition(event.clientX, event.clientY);
+  };
+
+  const handleMouseMove = (event: React.MouseEvent<SVGPathElement>) => {
+    if (hoveredSector !== null) {
+      updateTooltipPosition(event.clientX, event.clientY);
+    }
+  };
+
+  const updateTooltipPosition = (clientX: number, clientY: number) => {
+    // Ajuster la position pour éviter que le tooltip sorte de l'écran
+    const tooltipWidth = 150; // Estimation de la largeur du tooltip
+    const tooltipHeight = 80; // Estimation de la hauteur du tooltip
+    const margin = 10;
+
+    let x = clientX + margin;
+    let y = clientY - margin;
+
+    // Vérifier les bords de l'écran
+    if (x + tooltipWidth > window.innerWidth) {
+      x = clientX - tooltipWidth - margin;
+    }
+    if (y - tooltipHeight < 0) {
+      y = clientY + margin;
+    }
+
+    setTooltipPosition({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredSector(null);
+    setTooltipPosition(null);
+  };
+
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center relative">
       <svg width={size} height={size} className="mb-3">
         {sectors.map((sector, index) => (
           <path
@@ -83,9 +123,32 @@ export default function PieChart({ data, size = 120 }: PieChartProps) {
             fill={sector.color}
             stroke="white"
             strokeWidth="2"
+            onMouseEnter={(e) => handleMouseEnter(index, e)}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="cursor-pointer transition-opacity"
+            style={{
+              opacity: hoveredSector !== null && hoveredSector !== index ? 0.5 : 1,
+            }}
           />
         ))}
       </svg>
+      {hoveredSector !== null && tooltipPosition && (
+        <div
+          className="fixed z-50 bg-[var(--color-dark)] text-white text-xs rounded-lg px-3 py-2 shadow-lg pointer-events-none whitespace-nowrap"
+          style={{
+            left: `${tooltipPosition.x + 10}px`,
+            top: `${tooltipPosition.y - 10}px`,
+            transform: "translateY(-100%)",
+          }}
+        >
+          <div className="font-semibold mb-1">{sectors[hoveredSector].label}</div>
+          <div className="text-white/90 space-y-0.5">
+            <div>Valeur : {sectors[hoveredSector].value}</div>
+            <div>Pourcentage : {sectors[hoveredSector].percentage}%</div>
+          </div>
+        </div>
+      )}
       <div className="w-full space-y-1">
         {sectors.map((sector, index) => (
           <div key={index} className="flex items-center justify-between text-xs">
