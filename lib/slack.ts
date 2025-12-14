@@ -68,7 +68,12 @@ export async function sendSlackNotification(text: string): Promise<boolean> {
 
   // Les variables ne sont pas disponibles, utiliser l'API route comme proxy
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    // En production sur Vercel, utiliser l'URL automatique ou celle fournie
+    const baseUrl = 
+      process.env.NEXT_PUBLIC_APP_URL || 
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+      process.env.NEXT_PUBLIC_VERCEL_URL || 
+      "http://localhost:3000";
     
     const response = await fetch(`${baseUrl}/api/slack/notify`, {
       method: "POST",
