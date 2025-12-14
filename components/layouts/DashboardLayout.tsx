@@ -149,7 +149,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </nav>
           </div>
           <div className="flex items-center gap-4">
-              <span className="text-sm hidden lg:block text-white/90 font-medium">{currentDate}</span>
+              <span className="text-sm hidden lg:block px-4 py-2 rounded-full bg-white/10 text-white font-medium border border-white/20 backdrop-blur-sm">
+                {currentDate}
+              </span>
               <span className="text-sm hidden md:block text-white/90">{user?.email}</span>
               <button
                 onClick={handleLogout}
