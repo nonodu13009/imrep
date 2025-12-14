@@ -7,6 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { LogOut, LayoutDashboard, Users, HelpCircle, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import { logoutUser } from "@/lib/firebase/auth";
 import { Button, Breadcrumb } from "@/components/ui";
 
@@ -15,10 +16,13 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { role, loading } = useUserRole();
   const router = useRouter();
   const pathname = usePathname();
+
+  // Déconnexion automatique après 5 minutes d'inactivité
+  useInactivityLogout(isAuthenticated);
 
   const handleLogout = async () => {
     try {
