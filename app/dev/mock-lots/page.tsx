@@ -8,29 +8,20 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { createLot } from "@/lib/lots/actions";
 import { Etage, TypeLogement } from "@/lib/lots/types";
 
-// Données mockées pour générer 20 lots
-const mockLotsData = [
-  { codeProprietaire: "PROP001", nomProprietaire: "Jean Dupont", codeLot: "LOT001", adresse: "15 Rue de la République", codePostal: "13001", ville: "Marseille", complementAdresse: "Appartement 3A", etage: "rez-de-chaussée" as Etage, typeLogement: 2 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP002", nomProprietaire: "Marie Martin", codeLot: "LOT002", adresse: "42 Avenue du Prado", codePostal: "13008", ville: "Marseille", complementAdresse: "", etage: "intermédiaire" as Etage, typeLogement: 3 as TypeLogement, garageADiffAdresse: true, adresseGarage: "45 Avenue du Prado" },
-  { codeProprietaire: "PROP003", nomProprietaire: "Pierre Bernard", codeLot: "LOT003", adresse: "8 Boulevard de la Corniche", codePostal: "13007", ville: "Marseille", complementAdresse: "Résidence Les Flots", etage: "dernier étage" as Etage, typeLogement: 4 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP004", nomProprietaire: "Sophie Dubois", codeLot: "LOT004", adresse: "23 Rue Saint-Ferréol", codePostal: "13001", ville: "Marseille", complementAdresse: "", etage: "rez-de-chaussée" as Etage, typeLogement: 1 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP005", nomProprietaire: "Luc Moreau", codeLot: "LOT005", adresse: "67 Rue Paradis", codePostal: "13006", ville: "Marseille", complementAdresse: "Étage 2", etage: "intermédiaire" as Etage, typeLogement: 3 as TypeLogement, garageADiffAdresse: true, adresseGarage: "Parking souterrain - 67 Rue Paradis" },
-  { codeProprietaire: "PROP006", nomProprietaire: "Isabelle Laurent", codeLot: "LOT006", adresse: "12 Place Castellane", codePostal: "13006", ville: "Marseille", complementAdresse: "", etage: "dernier étage" as Etage, typeLogement: 5 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP007", nomProprietaire: "François Petit", codeLot: "LOT007", adresse: "89 Boulevard Longchamp", codePostal: "13001", ville: "Marseille", complementAdresse: "Appartement 5B", etage: "intermédiaire" as Etage, typeLogement: 2 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP008", nomProprietaire: "Catherine Roux", codeLot: "LOT008", adresse: "34 Rue de Rome", codePostal: "13006", ville: "Marseille", complementAdresse: "", etage: "rez-de-chaussée" as Etage, typeLogement: 1 as TypeLogement, garageADiffAdresse: true, adresseGarage: "36 Rue de Rome" },
-  { codeProprietaire: "PROP009", nomProprietaire: "Antoine Simon", codeLot: "LOT009", adresse: "56 Cours Julien", codePostal: "13006", ville: "Marseille", complementAdresse: "Studio", etage: "dernier étage" as Etage, typeLogement: 1 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP010", nomProprietaire: "Nathalie Michel", codeLot: "LOT010", adresse: "78 Avenue de la Plage", codePostal: "13008", ville: "Marseille", complementAdresse: "Résidence Le Phare", etage: "intermédiaire" as Etage, typeLogement: 4 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP011", nomProprietaire: "Philippe Garcia", codeLot: "LOT011", adresse: "21 Rue de la Paix", codePostal: "13001", ville: "Marseille", complementAdresse: "", etage: "rez-de-chaussée" as Etage, typeLogement: 2 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP012", nomProprietaire: "Valérie David", codeLot: "LOT012", adresse: "45 Boulevard Michelet", codePostal: "13008", ville: "Marseille", complementAdresse: "Appartement 7C", etage: "dernier étage" as Etage, typeLogement: 3 as TypeLogement, garageADiffAdresse: true, adresseGarage: "Parking résidentiel - 45 Boulevard Michelet" },
-  { codeProprietaire: "PROP013", nomProprietaire: "Stéphane Bertrand", codeLot: "LOT013", adresse: "9 Rue de la Canebière", codePostal: "13001", ville: "Marseille", complementAdresse: "", etage: "intermédiaire" as Etage, typeLogement: 2 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP014", nomProprietaire: "Claire Rousseau", codeLot: "LOT014", adresse: "123 Avenue de Mazargues", codePostal: "13009", ville: "Marseille", complementAdresse: "Villa", etage: "rez-de-chaussée" as Etage, typeLogement: 5 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP015", nomProprietaire: "Thomas Vincent", codeLot: "LOT015", adresse: "67 Rue Grignan", codePostal: "13001", ville: "Marseille", complementAdresse: "Étage 3", etage: "intermédiaire" as Etage, typeLogement: 3 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP016", nomProprietaire: "Julie Fournier", codeLot: "LOT016", adresse: "14 Place Jean Jaurès", codePostal: "13005", ville: "Marseille", complementAdresse: "", etage: "dernier étage" as Etage, typeLogement: 4 as TypeLogement, garageADiffAdresse: true, adresseGarage: "16 Place Jean Jaurès" },
-  { codeProprietaire: "PROP017", nomProprietaire: "Marc Lefebvre", codeLot: "LOT017", adresse: "32 Boulevard Baille", codePostal: "13005", ville: "Marseille", complementAdresse: "Appartement 2A", etage: "rez-de-chaussée" as Etage, typeLogement: 1 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP018", nomProprietaire: "Sandrine Girard", codeLot: "LOT018", adresse: "91 Rue de la Joliette", codePostal: "13002", ville: "Marseille", complementAdresse: "", etage: "intermédiaire" as Etage, typeLogement: 2 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP019", nomProprietaire: "Olivier Bonnet", codeLot: "LOT019", adresse: "5 Avenue du Général de Gaulle", codePostal: "13008", ville: "Marseille", complementAdresse: "Résidence Les Palmiers", etage: "dernier étage" as Etage, typeLogement: 5 as TypeLogement, garageADiffAdresse: false },
-  { codeProprietaire: "PROP020", nomProprietaire: "Emilie Durand", codeLot: "LOT020", adresse: "28 Rue Saint-Antoine", codePostal: "13015", ville: "Marseille", complementAdresse: "Studio mezzanine", etage: "rez-de-chaussée" as Etage, typeLogement: 1 as TypeLogement, garageADiffAdresse: true, adresseGarage: "30 Rue Saint-Antoine" },
-];
+// Données mockées supprimées - cette page nécessite maintenant des données externes
+const mockLotsData: Array<{
+  codeProprietaire: string;
+  nomProprietaire: string;
+  codeLot: string;
+  adresse: string;
+  codePostal: string;
+  ville: string;
+  complementAdresse?: string;
+  etage: Etage;
+  typeLogement: TypeLogement;
+  garageADiffAdresse: boolean;
+  adresseGarage?: string;
+}> = [];
 
 export default function MockLotsPage() {
   const { user, loading: authLoading } = useAuth();
