@@ -3,6 +3,15 @@ import { db } from "@/lib/firebase/config";
 import { getUserRole } from "@/lib/firebase/users";
 import { getLotById, isNumeroContratAlreadyUsed } from "./queries";
 import { Lot, LotStatus, Sortie, Suppression, HistoryEntry, HistoryType } from "./types";
+import {
+  notifyLotCreated,
+  notifyLotUpdated,
+  notifySortieRequested,
+  notifySortieValidated,
+  notifySortieRefused,
+  notifyEntreeValidated,
+  notifyEntreeRefused,
+} from "@/lib/notifications/lots";
 
 // Helper function to remove undefined values from an object recursively
 function removeUndefinedValues(obj: Record<string, any>): Record<string, any> {
@@ -64,6 +73,19 @@ export async function createLot(lotData: Omit<Lot, "id" | "statut" | "createdAt"
     };
 
     await setDoc(lotRef, firestoreData);
+
+    // Notification Slack
+    try {
+      await notifyLotCreated({
+        codeLot: lotData.codeLot,
+        adresse: lotData.adresse,
+        createdBy: userId,
+        dateEffetDemandee: lotData.dateEffetDemandee,
+      });
+    } catch (notificationError) {
+      // Ne pas faire échouer la création si la notification échoue
+      console.error("Erreur lors de l'envoi de la notification Slack (création de lot):", notificationError);
+    }
 
     return lotRef.id;
   } catch (error) {
@@ -128,6 +150,17 @@ export async function updateLot(lotId: string, updates: Partial<Lot>, userId: st
     }
 
     await updateDoc(doc(db, "lots", lotId), updateData);
+
+    // Notification Slack
+    if (lot) {
+      await notifyLotUpdated({
+        lotId,
+        codeLot: lot.codeLot,
+        adresse: lot.adresse,
+        updatedBy: userId,
+        changedFields: Object.keys(changedFields),
+      });
+    }
   } catch (error) {
     console.error("Erreur lors de la modification du lot:", error);
     throw error;
@@ -187,6 +220,19 @@ export async function requestSortie(lotId: string, sortieData: Omit<Sortie, "sta
       updatedAt: Timestamp.now(),
       history: arrayUnion(historyEntry),
     });
+
+    // Notification Slack
+    if (lot) {
+      await notifySortieRequested({
+        lotId,
+        codeLot: lot.codeLot,
+        adresse: lot.adresse,
+        numeroContrat: lot.numeroContrat,
+        dateSortieDemandee: sortieData.dateSortieDemandee,
+        motif: sortieData.motif,
+        requestedBy: userId,
+      });
+    }
   } catch (error) {
     console.error("Erreur lors de la demande de sortie:", error);
     throw error;
@@ -233,6 +279,17 @@ export async function validateEntree(lotId: string, numeroContrat: string, valid
       updatedAt: Timestamp.now(),
       history: arrayUnion(historyEntry),
     });
+
+    // Notification Slack
+    if (lot) {
+      await notifyEntreeValidated({
+        lotId,
+        codeLot: lot.codeLot,
+        adresse: lot.adresse,
+        numeroContrat,
+        validatedBy,
+      });
+    }
   } catch (error) {
     console.error("Erreur lors de la validation de l'entrée:", error);
     throw error;
@@ -273,6 +330,17 @@ export async function refuserEntree(lotId: string, motifRefus: string, validated
       updatedAt: Timestamp.now(),
       history: arrayUnion(historyEntry),
     });
+
+    // Notification Slack
+    if (lot) {
+      await notifyEntreeRefused({
+        lotId,
+        codeLot: lot.codeLot,
+        adresse: lot.adresse,
+        motifRefus,
+        refusedBy: validatedBy,
+      });
+    }
   } catch (error) {
     console.error("Erreur lors du refus de l'entrée:", error);
     throw error;
@@ -308,6 +376,17 @@ export async function validateSortie(lotId: string, validatedBy: string): Promis
       updatedAt: Timestamp.now(),
       history: arrayUnion(historyEntry),
     });
+
+    // Notification Slack
+    if (lot && lot.sortie) {
+      await notifySortieValidated({
+        lotId,
+        codeLot: lot.codeLot,
+        adresse: lot.adresse,
+        numeroContrat: lot.numeroContrat,
+        validatedBy,
+      });
+    }
   } catch (error) {
     console.error("Erreur lors de la validation de la sortie:", error);
     throw error;
@@ -347,6 +426,18 @@ export async function refuserSortie(lotId: string, motifRefus: string, validated
       updatedAt: Timestamp.now(),
       history: arrayUnion(historyEntry),
     });
+
+    // Notification Slack
+    if (lot && lot.sortie) {
+      await notifySortieRefused({
+        lotId,
+        codeLot: lot.codeLot,
+        adresse: lot.adresse,
+        numeroContrat: lot.numeroContrat,
+        motifRefus,
+        refusedBy: validatedBy,
+      });
+    }
   } catch (error) {
     console.error("Erreur lors du refus de la sortie:", error);
     throw error;
