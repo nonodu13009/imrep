@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -62,6 +62,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     return items;
   };
+
+  const currentDate = useMemo(() => {
+    const date = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
+    return date.toLocaleDateString("fr-FR", options);
+  }, []);
 
   if (loading) {
     return (
@@ -138,6 +149,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </nav>
           </div>
           <div className="flex items-center gap-4">
+              <span className="text-sm hidden lg:block text-white/90 font-medium">{currentDate}</span>
               <span className="text-sm hidden md:block text-white/90">{user?.email}</span>
               <button
                 onClick={handleLogout}
