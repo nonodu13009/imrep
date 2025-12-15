@@ -46,3 +46,4 @@ service-account*.json
 next-env.d.ts
 vercel.txt
 vercel-env-vars.txt
+mcp/
