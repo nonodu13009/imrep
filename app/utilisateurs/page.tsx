@@ -11,7 +11,7 @@ import { getAllUsers, updateUserRole, toggleUserStatus, deleteUser } from "@/lib
 import { updateUserPassword, createUserWithAdmin } from "@/lib/firebase/admin-actions";
 import { User, UserRole } from "@/lib/lots/types";
 import { useToast } from "@/components/ui";
-import { Plus, Edit, Trash2, Power, Key } from "lucide-react";
+import { Plus, Edit, Trash2, Power, Key, Eye, EyeOff } from "lucide-react";
 
 export default function UtilisateursPage() {
   const { user, loading: authLoading } = useAuth();
@@ -33,6 +33,10 @@ export default function UtilisateursPage() {
   const [newUserDisplayName, setNewUserDisplayName] = useState("");
   const [createUserError, setCreateUserError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [showNewUserPassword, setShowNewUserPassword] = useState(false);
+  const [showNewUserConfirmPassword, setShowNewUserConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (authLoading || roleLoading) return;
@@ -163,6 +167,8 @@ export default function UtilisateursPage() {
       setNewUserDisplayName("");
       setNewUserRole("imrep");
       setCreateUserError("");
+      setShowNewUserPassword(false);
+      setShowNewUserConfirmPassword(false);
       
       // Rafraîchir la liste des utilisateurs
       const updatedUsers = await getAllUsers();
@@ -199,6 +205,8 @@ export default function UtilisateursPage() {
           setNewUserDisplayName("");
           setNewUserRole("imrep");
           setCreateUserError("");
+          setShowNewUserPassword(false);
+          setShowNewUserConfirmPassword(false);
         }}>
           <Plus size={18} className="mr-2" />
           Créer un utilisateur
@@ -244,6 +252,8 @@ export default function UtilisateursPage() {
                           setNewPassword("");
                           setConfirmPassword("");
                           setPasswordError("");
+                          setShowPassword(false);
+                          setShowConfirmPassword(false);
                         }}
                         title="Modifier le mot de passe"
                       >
@@ -277,6 +287,8 @@ export default function UtilisateursPage() {
                           setNewPassword("");
                           setConfirmPassword("");
                           setPasswordError("");
+                          setShowPassword(false);
+                          setShowConfirmPassword(false);
                         }}
                         title="Modifier le mot de passe"
                       >
@@ -328,34 +340,56 @@ export default function UtilisateursPage() {
             <p className="text-sm text-[var(--color-neutral-600)] mb-4">
               Utilisateur : <strong>{selectedUser.user.email}</strong>
             </p>
-            <Input
-              type="password"
-              label="Nouveau mot de passe"
-              value={newPassword}
-              onChange={(e) => {
-                setNewPassword(e.target.value);
-                setPasswordError("");
-              }}
-              className="mb-4"
-              helpText="Minimum 6 caractères"
-            />
-            <Input
-              type="password"
-              label="Confirmer le mot de passe"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                setPasswordError("");
-              }}
-              className="mb-4"
-              error={passwordError}
-            />
+            <div className="relative mb-4">
+              <Input
+                type={showPassword ? "text" : "password"}
+                label="Nouveau mot de passe"
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setPasswordError("");
+                }}
+                className="pr-10"
+                helpText="Minimum 6 caractères"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-9 text-[#64748b] hover:text-[#475569] transition-colors"
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            <div className="relative mb-4">
+              <Input
+                type={showConfirmPassword ? "text" : "password"}
+                label="Confirmer le mot de passe"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setPasswordError("");
+                }}
+                className="pr-10"
+                error={passwordError}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-9 text-[#64748b] hover:text-[#475569] transition-colors"
+                aria-label={showConfirmPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
             <div className="flex gap-3 justify-end">
               <Button variant="secondary" onClick={() => {
                 setSelectedUser(null);
                 setNewPassword("");
                 setConfirmPassword("");
                 setPasswordError("");
+                setShowPassword(false);
+                setShowConfirmPassword(false);
               }}>
                 Annuler
               </Button>
@@ -419,30 +453,50 @@ export default function UtilisateursPage() {
               <option value="imrep">IMREP</option>
               <option value="allianz">Allianz</option>
             </Select>
-            <Input
-              type="password"
-              label="Mot de passe"
-              value={newUserPassword}
-              onChange={(e) => {
-                setNewUserPassword(e.target.value);
-                setCreateUserError("");
-              }}
-              className="mb-4"
-              helpText="Minimum 6 caractères"
-              required
-            />
-            <Input
-              type="password"
-              label="Confirmer le mot de passe"
-              value={newUserConfirmPassword}
-              onChange={(e) => {
-                setNewUserConfirmPassword(e.target.value);
-                setCreateUserError("");
-              }}
-              className="mb-4"
-              error={createUserError}
-              required
-            />
+            <div className="relative mb-4">
+              <Input
+                type={showNewUserPassword ? "text" : "password"}
+                label="Mot de passe"
+                value={newUserPassword}
+                onChange={(e) => {
+                  setNewUserPassword(e.target.value);
+                  setCreateUserError("");
+                }}
+                className="pr-10"
+                helpText="Minimum 6 caractères"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewUserPassword(!showNewUserPassword)}
+                className="absolute right-3 top-9 text-[#64748b] hover:text-[#475569] transition-colors"
+                aria-label={showNewUserPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {showNewUserPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            <div className="relative mb-4">
+              <Input
+                type={showNewUserConfirmPassword ? "text" : "password"}
+                label="Confirmer le mot de passe"
+                value={newUserConfirmPassword}
+                onChange={(e) => {
+                  setNewUserConfirmPassword(e.target.value);
+                  setCreateUserError("");
+                }}
+                className="pr-10"
+                error={createUserError}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewUserConfirmPassword(!showNewUserConfirmPassword)}
+                className="absolute right-3 top-9 text-[#64748b] hover:text-[#475569] transition-colors"
+                aria-label={showNewUserConfirmPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {showNewUserConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
             <div className="flex gap-3 justify-end">
               <Button
                 variant="secondary"
@@ -454,6 +508,8 @@ export default function UtilisateursPage() {
                   setNewUserDisplayName("");
                   setNewUserRole("imrep");
                   setCreateUserError("");
+                  setShowNewUserPassword(false);
+                  setShowNewUserConfirmPassword(false);
                 }}
                 disabled={isCreating}
               >
