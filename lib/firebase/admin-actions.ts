@@ -166,6 +166,7 @@ export async function createUserWithAdmin(
     if (error?.code === "auth/email-already-exists") {
       try {
         const adminAuth = getAdminAuth();
+        const adminDb = getAdminDb();
         const userRecord = await adminAuth.getUserByEmail(email);
         const uid = userRecord.uid;
 
