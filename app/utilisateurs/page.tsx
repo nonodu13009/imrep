@@ -8,7 +8,7 @@ import Input from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getAllUsers, updateUserRole, toggleUserStatus, deleteUser } from "@/lib/firebase/users";
-import { updateUserPassword, createUserWithAdmin } from "@/lib/firebase/admin-actions";
+import { updateUserPassword } from "@/lib/firebase/admin-actions";
 import { User, UserRole } from "@/lib/lots/types";
 import { useToast } from "@/components/ui";
 import { Plus, Edit, Trash2, Power, Key, Eye, EyeOff } from "lucide-react";
@@ -151,14 +151,37 @@ export default function UtilisateursPage() {
       return;
     }
 
+    if (!user) {
+      setCreateUserError("Vous devez être connecté");
+      return;
+    }
+
     setIsCreating(true);
     try {
-      await createUserWithAdmin(
-        newUserEmail,
-        newUserPassword,
-        newUserRole,
-        newUserDisplayName || undefined
-      );
+      // Récupérer le token Firebase
+      const idToken = await user.getIdToken();
+
+      // Appeler l'API route
+      const response = await fetch("/api/users/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: newUserEmail,
+          password: newUserPassword,
+          role: newUserRole,
+          displayName: newUserDisplayName || undefined,
+          idToken,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Erreur lors de la création de l'utilisateur");
+      }
+
       showToast("Utilisateur créé avec succès", "success");
       setShowCreateModal(false);
       setNewUserEmail("");
