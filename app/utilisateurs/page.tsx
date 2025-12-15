@@ -179,10 +179,12 @@ export default function UtilisateursPage() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
+        console.error("[Create User] Erreur API:", data);
         throw new Error(data.error || "Erreur lors de la création de l'utilisateur");
       }
 
-      showToast("Utilisateur créé avec succès", "success");
+      console.log("[Create User] Succès:", data);
+      showToast(`Utilisateur ${newUserEmail} créé avec succès`, "success");
       setShowCreateModal(false);
       setNewUserEmail("");
       setNewUserPassword("");

@@ -79,12 +79,15 @@ export async function POST(request: Request) {
     }
 
     // Créer l'utilisateur
+    console.log(`[API Create User] Tentative de création: ${email}, rôle: ${role}`);
     const result = await createUserWithAdmin(
       email,
       password,
       role as UserRole,
       displayName
     );
+
+    console.log(`[API Create User] Utilisateur créé avec succès: ${result.uid}`);
 
     return NextResponse.json({
       success: true,
