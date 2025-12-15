@@ -58,7 +58,7 @@ Cette application permet à une agence immobilière (IMREP) de déclarer et gér
 
 1. **Cloner le dépôt**
 ```bash
-git clone https://github.com/Allianz-Marseille/imreppno.git
+git clone https://github.com/Allianz-Marseille/imrep2025.git
 cd imrep-allianz-gestion-pno
 ```
 
@@ -188,11 +188,11 @@ npm run lint     # Lance ESLint
 
 ## 🚢 Déploiement
 
-Le projet peut être déployé sur Vercel (recommandé pour Next.js) :
+Le projet peut être déployé sur n'importe quelle plateforme supportant Next.js :
 
-1. Connecter le dépôt GitHub à Vercel
-2. Configurer les variables d'environnement
-3. Déployer automatiquement à chaque push sur `main`
+1. Configurer les variables d'environnement
+2. Exécuter `npm run build` pour créer le build de production
+3. Exécuter `npm run start` pour lancer le serveur de production
 
 ## 📄 Licence
 

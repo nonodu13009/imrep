@@ -50,13 +50,12 @@ NEXT_PUBLIC_FIREBASE_APP_ID=1:902435108326:web:579070ad23b45b86745227
 FIREBASE_SERVICE_ACCOUNT_KEY='{"type":"service_account","project_id":"imrep-pno","private_key_id":"...","private_key":"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n","client_email":"...","client_id":"...","auth_uri":"...","token_uri":"...","auth_provider_x509_cert_url":"...","client_x509_cert_url":"..."}'
 ```
 
-### Sur Vercel
+### En production
 
-1. **Aller dans Vercel Dashboard** → Votre projet → **Settings** → **Environment Variables**
+1. **Configurer la variable d'environnement** dans votre plateforme de déploiement
 2. **Ajouter une nouvelle variable :**
    - **Name :** `FIREBASE_SERVICE_ACCOUNT_KEY`
    - **Value :** Coller le JSON complet (sur une seule ligne, entre guillemets simples)
-   - **Environments :** Production, Preview, Development
 3. **Sauvegarder**
 4. **Redéployer** l'application pour que la variable soit prise en compte
 
@@ -76,7 +75,7 @@ FIREBASE_SERVICE_ACCOUNT_KEY='{"type":"service_account","project_id":"imrep-pno"
 
 ✅ **À faire :**
 - Stocker la clé dans `.env.local` (déjà dans `.gitignore`)
-- Stocker la clé dans Vercel Environment Variables (chiffrées)
+- Stocker la clé dans les variables d'environnement de votre plateforme de déploiement (chiffrées)
 - Utiliser la clé uniquement côté serveur (Server Actions)
 
 ❌ **À ne jamais faire :**
