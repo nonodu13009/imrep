@@ -8,7 +8,7 @@ import Input from "@/components/ui/Input";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getAllUsers, updateUserRole, toggleUserStatus, deleteUser } from "@/lib/firebase/users";
-import { updateUserPassword } from "@/lib/firebase/admin-actions";
+import { updateUserPassword, createUserWithAdmin } from "@/lib/firebase/admin-actions";
 import { User, UserRole } from "@/lib/lots/types";
 import { useToast } from "@/components/ui";
 import { Plus, Edit, Trash2, Power, Key } from "lucide-react";
@@ -25,6 +25,14 @@ export default function UtilisateursPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserConfirmPassword, setNewUserConfirmPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState<UserRole>("imrep");
+  const [newUserDisplayName, setNewUserDisplayName] = useState("");
+  const [createUserError, setCreateUserError] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (authLoading || roleLoading) return;
@@ -120,6 +128,53 @@ export default function UtilisateursPage() {
     }
   };
 
+  const handleCreateUser = async () => {
+    // Validation
+    setCreateUserError("");
+    
+    if (!newUserEmail || !newUserEmail.includes("@")) {
+      setCreateUserError("Email invalide");
+      return;
+    }
+
+    if (!newUserPassword || newUserPassword.length < 6) {
+      setCreateUserError("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+
+    if (newUserPassword !== newUserConfirmPassword) {
+      setCreateUserError("Les mots de passe ne correspondent pas");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      await createUserWithAdmin(
+        newUserEmail,
+        newUserPassword,
+        newUserRole,
+        newUserDisplayName || undefined
+      );
+      showToast("Utilisateur créé avec succès", "success");
+      setShowCreateModal(false);
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserConfirmPassword("");
+      setNewUserDisplayName("");
+      setNewUserRole("imrep");
+      setCreateUserError("");
+      
+      // Rafraîchir la liste des utilisateurs
+      const updatedUsers = await getAllUsers();
+      setUsers(updatedUsers);
+    } catch (error: any) {
+      showToast(error.message || "Erreur lors de la création de l'utilisateur", "error");
+      setCreateUserError(error.message || "Erreur lors de la création");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   if (authLoading || roleLoading || loading) {
     return (
       <DashboardLayout>
@@ -136,7 +191,15 @@ export default function UtilisateursPage() {
     <DashboardLayout>
       <div className="flex items-center justify-between mb-[24px]">
         <SectionTitle>Gestion des utilisateurs</SectionTitle>
-        <Button variant="primary">
+        <Button variant="primary" onClick={() => {
+          setShowCreateModal(true);
+          setNewUserEmail("");
+          setNewUserPassword("");
+          setNewUserConfirmPassword("");
+          setNewUserDisplayName("");
+          setNewUserRole("imrep");
+          setCreateUserError("");
+        }}>
           <Plus size={18} className="mr-2" />
           Créer un utilisateur
         </Button>
@@ -313,6 +376,95 @@ export default function UtilisateursPage() {
           message={`Êtes-vous sûr de vouloir supprimer l'utilisateur ${selectedUser.user.email} ?`}
           variant="danger"
         />
+      )}
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-[var(--radius-md)] p-[var(--spacing-md)] max-w-md w-full mx-4 shadow-[var(--shadow-hover)]">
+            <h3 className="text-[20px] font-semibold text-[var(--color-dark)] mb-4">
+              Créer un nouvel utilisateur
+            </h3>
+            <Input
+              type="email"
+              label="Email"
+              value={newUserEmail}
+              onChange={(e) => {
+                setNewUserEmail(e.target.value);
+                setCreateUserError("");
+              }}
+              className="mb-4"
+              placeholder="utilisateur@example.com"
+              required
+            />
+            <Input
+              type="text"
+              label="Nom d'affichage (optionnel)"
+              value={newUserDisplayName}
+              onChange={(e) => {
+                setNewUserDisplayName(e.target.value);
+                setCreateUserError("");
+              }}
+              className="mb-4"
+              placeholder="Nom de l'utilisateur"
+            />
+            <Select
+              label="Rôle"
+              value={newUserRole}
+              onChange={(e) => {
+                setNewUserRole(e.target.value as UserRole);
+                setCreateUserError("");
+              }}
+              className="mb-4"
+            >
+              <option value="imrep">IMREP</option>
+              <option value="allianz">Allianz</option>
+            </Select>
+            <Input
+              type="password"
+              label="Mot de passe"
+              value={newUserPassword}
+              onChange={(e) => {
+                setNewUserPassword(e.target.value);
+                setCreateUserError("");
+              }}
+              className="mb-4"
+              helpText="Minimum 6 caractères"
+              required
+            />
+            <Input
+              type="password"
+              label="Confirmer le mot de passe"
+              value={newUserConfirmPassword}
+              onChange={(e) => {
+                setNewUserConfirmPassword(e.target.value);
+                setCreateUserError("");
+              }}
+              className="mb-4"
+              error={createUserError}
+              required
+            />
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setNewUserEmail("");
+                  setNewUserPassword("");
+                  setNewUserConfirmPassword("");
+                  setNewUserDisplayName("");
+                  setNewUserRole("imrep");
+                  setCreateUserError("");
+                }}
+                disabled={isCreating}
+              >
+                Annuler
+              </Button>
+              <Button variant="primary" onClick={handleCreateUser} isLoading={isCreating}>
+                Créer
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </DashboardLayout>
   );

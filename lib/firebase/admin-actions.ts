@@ -6,6 +6,7 @@
  */
 
 import { getAdminAuth, getAdminDb } from "./admin";
+import { UserRole } from "@/lib/lots/types";
 
 const ROOT_ADMIN_EMAIL = "jeanmichel@allianz-nogaro.fr";
 
@@ -96,6 +97,101 @@ export async function updateUserPassword(
     console.error("[Admin] Erreur lors de la modification du mot de passe:", error);
     throw new Error(
       error.message || "Erreur lors de la modification du mot de passe"
+    );
+  }
+}
+
+/**
+ * Crée un nouvel utilisateur dans Firebase Auth ET Firestore
+ * Nécessite FIREBASE_SERVICE_ACCOUNT_KEY dans les variables d'environnement
+ * @param email - L'email de l'utilisateur
+ * @param password - Le mot de passe (minimum 6 caractères)
+ * @param role - Le rôle de l'utilisateur (imrep ou allianz)
+ * @param displayName - Le nom d'affichage (optionnel)
+ */
+export async function createUserWithAdmin(
+  email: string,
+  password: string,
+  role: UserRole,
+  displayName?: string
+): Promise<{ uid: string; email: string }> {
+  try {
+    // Vérifier que FIREBASE_SERVICE_ACCOUNT_KEY est configuré
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+      throw new Error(
+        "FIREBASE_SERVICE_ACCOUNT_KEY n'est pas configuré. Impossible de créer l'utilisateur."
+      );
+    }
+
+    // Validation
+    if (!email || !email.includes("@")) {
+      throw new Error("Email invalide");
+    }
+
+    if (!password || password.length < 6) {
+      throw new Error("Le mot de passe doit contenir au moins 6 caractères");
+    }
+
+    // Le type UserRole garantit déjà que role est "imrep" ou "allianz"
+
+    const adminAuth = getAdminAuth();
+    const adminDb = getAdminDb();
+
+    // Créer l'utilisateur dans Firebase Auth
+    const userRecord = await adminAuth.createUser({
+      email,
+      password,
+      displayName: displayName || email.split("@")[0],
+      emailVerified: false,
+    });
+
+    const uid = userRecord.uid;
+
+    // Créer l'utilisateur dans Firestore
+    await adminDb.collection("users").doc(uid).set({
+      email,
+      role,
+      isActive: true,
+      createdAt: new Date(),
+      displayName: displayName || email.split("@")[0],
+    });
+
+    console.log(`[Admin] Utilisateur créé: ${email} (${uid}) avec le rôle ${role}`);
+
+    return { uid, email };
+  } catch (error: any) {
+    console.error("[Admin] Erreur lors de la création de l'utilisateur:", error);
+    
+    // Si l'utilisateur existe déjà dans Auth, essayer de le récupérer et créer dans Firestore
+    if (error?.code === "auth/email-already-exists") {
+      try {
+        const adminAuth = getAdminAuth();
+        const userRecord = await adminAuth.getUserByEmail(email);
+        const uid = userRecord.uid;
+
+        // Vérifier si l'utilisateur existe déjà dans Firestore
+        const userDoc = await adminDb.collection("users").doc(uid).get();
+        if (!userDoc.exists) {
+          // Créer dans Firestore seulement
+          await adminDb.collection("users").doc(uid).set({
+            email,
+            role,
+            isActive: true,
+            createdAt: new Date(),
+            displayName: displayName || email.split("@")[0],
+          });
+          console.log(`[Admin] Utilisateur ajouté à Firestore: ${email} (${uid})`);
+          return { uid, email };
+        } else {
+          throw new Error("Cet utilisateur existe déjà");
+        }
+      } catch (recoveryError: any) {
+        throw new Error(recoveryError.message || "Cet utilisateur existe déjà");
+      }
+    }
+
+    throw new Error(
+      error.message || "Erreur lors de la création de l'utilisateur"
     );
   }
 }
