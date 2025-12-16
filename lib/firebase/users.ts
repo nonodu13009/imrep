@@ -1,9 +1,8 @@
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "./config";
 import { User, UserRole } from "@/lib/lots/types";
-import { deleteUserWithAdmin } from "./admin-actions";
 
-export const ROOT_ADMIN_EMAIL = "jeanmichel@allianz-nogaro.fr";
+const ROOT_ADMIN_EMAIL = "jeanmichel@allianz-nogaro.fr";
 
 export async function getUserRole(uid: string): Promise<UserRole | null> {
   try {
@@ -112,21 +111,10 @@ export async function deleteUser(uid: string): Promise<void> {
       throw new Error("Le root admin ne peut pas être supprimé");
     }
 
-    // Essayer d'abord avec l'Admin SDK (supprime Auth + Firestore)
-    // Si FIREBASE_SERVICE_ACCOUNT_KEY n'est pas configuré, fallback sur Firestore uniquement
-    if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-      try {
-        await deleteUserWithAdmin(uid, userData.email);
-        return; // Succès avec Admin SDK
-      } catch (adminError: any) {
-        console.warn("[deleteUser] Erreur avec Admin SDK, fallback sur Firestore:", adminError.message);
-        // Continuer avec la suppression Firestore uniquement
-      }
-    }
-
-    // Fallback : supprimer uniquement de Firestore (si Admin SDK non disponible)
-    await deleteDoc(doc(db, "users", uid));
-    console.log(`[deleteUser] Utilisateur ${uid} supprimé de Firestore uniquement`);
+    await updateDoc(doc(db, "users", uid), {
+      isActive: false,
+      deletedAt: new Date(),
+    });
   } catch (error) {
     console.error("Erreur lors de la suppression de l'utilisateur:", error);
     throw error;
